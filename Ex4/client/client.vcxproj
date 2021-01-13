@@ -140,10 +140,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="communication_thread.c" />
     <ClCompile Include="main_client.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HardCodedData.h" />
     <ClInclude Include="main_client.h" />
+    <ClInclude Include="thread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
