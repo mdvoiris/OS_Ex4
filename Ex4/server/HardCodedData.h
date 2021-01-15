@@ -3,26 +3,8 @@
 #ifndef __HARD_CODED_DATA_H__
 #define __HARD_CODED_DATA_H__
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-
-//Includes:
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <stdbool.h> 
-#include <string.h>
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#pragma comment(lib, "Ws2_32.lib")
-
-
 //Defines:
-#define SERVER_ADDRESS_STR "127.0.0.1"
+#define SERVER_ADDRESS "127.0.0.1"
 #define DEFAULT_TIMEOUT 15000
 
 

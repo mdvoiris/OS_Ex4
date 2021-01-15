@@ -55,7 +55,7 @@ Status main(int argc, char* argv[])
 
 Status start_socket() {
     Status status = INVALID_STATUS_CODE;
-    unsigned long Address;
+    unsigned long address;
     SOCKADDR_IN service;
     int bindRes;
     int ListenRes;
@@ -69,14 +69,14 @@ Status start_socket() {
     }
 
     // Create a sockaddr_in object and set its values.
-    Address = inet_addr(SERVER_ADDRESS_STR);
-    if (Address == INADDR_NONE)
+    //address = inet_addr(SERVER_ADDRESS);
+    if (InetPton(AF_INET, TEXT(SERVER_ADDRESS), &address) != 1)
     {
         return FAILED_TO_CONVERT_IP_ADDRESS;
     }
 
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = Address;
+    service.sin_addr.s_addr = address;
     service.sin_port = htons(server_port);
 
     // Bind the socket.
@@ -267,7 +267,7 @@ void report_error(Status status, bool terminate) {
     case INVALID_PORT_NUMBER:           printf("Error - Program called with invalid port number"); break;
     case WSASTARTUP_FAILED:             printf("Error - WSAStartup failed with %ld", WSAGetLastError()); break;
     case FAILED_TO_CREATE_SOCKET:       printf("Error - socket failed with %ld", WSAGetLastError()); break;
-    case FAILED_TO_CONVERT_IP_ADDRESS:  printf("Error - Failed to convert \"%s\" into an ip address", SERVER_ADDRESS_STR); break;
+    case FAILED_TO_CONVERT_IP_ADDRESS:  printf("Error - Failed to convert \"%s\" into an ip address", SERVER_ADDRESS); break;
     case FAILED_TO_BIND_SOCKET:         printf("Error - bind failed with %ld", WSAGetLastError()); break;
     case FAILED_TO_LISTEN_ON_SOCKET:    printf("Error - listen failed with %ld", WSAGetLastError()); break;
     case FAILED_TO_CLOSE_SOCKET:        printf("Error - Failed to close socket with %ld", WSAGetLastError()); break;

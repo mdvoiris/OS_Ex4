@@ -34,14 +34,14 @@ Comm_status send_string(const char* Str, SOCKET sd)
 
 	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
 
-	SendRes = SendBuffer(
+	SendRes = send_buffer(
 		(const char*)(&TotalStringSizeInBytes),
 		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
 		sd);
 
 	if (SendRes != COMM_SUCCESS) return SendRes;
 
-	SendRes = SendBuffer(
+	SendRes = send_buffer(
 		(const char*)(Str),
 		(int)(TotalStringSizeInBytes),
 		sd);

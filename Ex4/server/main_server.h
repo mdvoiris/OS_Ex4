@@ -5,6 +5,7 @@
 
 
 //Includes:
+#include "shared_communication.h"
 #include "HardCodedData.h"
 #include "service_thread.h"
 
