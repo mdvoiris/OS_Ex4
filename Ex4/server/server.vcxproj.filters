@@ -27,6 +27,9 @@
     <ClCompile Include="service_thread.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Share\shared_communication.c">
+      <Filter>Shared Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main_server.h">
@@ -37,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="HardCodedData.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Share\shared_communication.h">
+      <Filter>Shared Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -140,9 +140,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Share\shared_communication.c" />
     <ClCompile Include="main_client.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Share\shared_communication.h" />
+    <ClInclude Include="HardCodedData.h" />
     <ClInclude Include="main_client.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

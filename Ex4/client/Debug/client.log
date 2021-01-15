@@ -1,0 +1,13 @@
+﻿  main_client.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(82,35): warning C4047: '==': 'SEND_SERVER *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(109,27): warning C4047: '=': 'CLIENT_ACTION *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(219,62): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(219,50): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(228,71): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(228,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(230,72): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(230,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(232,26): warning C4013: 'receive_level' undefined; assuming extern returning int
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(133,8): warning C4101: 'event_result': unreferenced local variable
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(253,28): error C2065: 'FAILED_ON_WAIT_FAILED': undeclared identifier
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(253,1): error C2051: case expression not constant
