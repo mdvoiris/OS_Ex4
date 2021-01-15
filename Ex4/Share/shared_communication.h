@@ -22,7 +22,9 @@
 typedef enum _comm_status {
 	INVALID_COMM_STATUS = -1,
 	COMM_SUCCESS,
-	COMM_FAILED
+	COMM_FAILED,
+	RECEIVE_DISCONNECTED,
+	TIMEOUT_RECEIVE
 }Comm_status;
 
 

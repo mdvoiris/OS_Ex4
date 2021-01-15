@@ -2,6 +2,30 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "main_client.h"
+Status receive_level(RECEIVE_SERVER receive_serve, CLIENT_ACTION* client_action)
+{
+	char* AcceptedStr = NULL;
+	Comm_status recv_res;
+
+	recv_res = receive_string(&AcceptedStr, m_socket);
+
+	if (recv_res == COMM_FAILED)
+	{
+		return FAILED_RECEIVE;
+	}
+	else if (recv_res == RECEIVE_DISCONNECTED)
+	{
+		printf("Server closed connection. Bye!\n");
+		return 0x555;
+	}
+	else
+	{
+		printf("%s\n", AcceptedStr);
+	}
+
+	free(AcceptedStr);
+}
+
 
 Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action)
 {
@@ -75,7 +99,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 //	return SendRes;
 //}
 
-Status send_level(char* player_name, SOCKET m_socket, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char send_str[MAX_LEN………_SEND];
 	if (*send_server == CLIENT_REQUEST)
@@ -245,7 +269,7 @@ Status main(int argc, char* argv[])
 		if (client_action == SEND)
 		{
 			setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int));
-			status = send_level(player_name, m_socket, &send_server, receive_server, &client_action, server_port, server_address);
+			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS)
 				report_error(status);
 			continue;
@@ -258,7 +282,7 @@ Status main(int argc, char* argv[])
 			else
 				setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int));
 			char* AcceptedStr = NULL;
-			status = receive_level(player_name, m_socket, send_server, receive_server, &client_action);
+			status = receive_level(&receive_server, &client_action);
 			if (status != SUCCESS)
 				report_error(status);
 			continue;
