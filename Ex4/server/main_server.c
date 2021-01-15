@@ -44,6 +44,10 @@ Status main(int argc, char* argv[])
 
 
 
+    CloseHandle(exit_thread_h);
+
+    if (WSACleanup() == SOCKET_ERROR)
+        printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
 
     return SUCCESS;
 }
@@ -116,8 +120,16 @@ Status admit_clients() {
         AcceptSocket = accept(MainSocket, NULL, NULL);
         if (AcceptSocket == INVALID_SOCKET)
         {
-            clients_cleanup();
-            return SUCCESS;
+            //if exit called' return success
+            if (WaitForSingleObject(exit_event, 0) == WAIT_OBJECT_0) {
+                clients_cleanup();
+                return SUCCESS;
+            }
+            //otherwise unexpeced error
+            else {
+                clients_cleanup();
+                return FAILED_TO_ACCEPT_SOCKET;
+            }
         }
 
         if (client_count >= NUM_OF_SLOTS) {
@@ -179,6 +191,11 @@ DWORD WINAPI monitor_exit(HANDLE main_thread_h) {
     {
         fgets(buffer, 6, stdin);
         if (strcmp(buffer, "exit\n") == 0) {
+            //set exit event
+            if (!SetEvent(exit_event)) {
+                report_error(FAILED_TO_SET_EVENT, false);
+            }
+            //close MainSocket
             status = (closesocket(MainSocket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
             report_error(status, false);
             return SUCCESS;
@@ -265,6 +282,8 @@ void report_error(Status status, bool terminate) {
 
 
     if (terminate) {
+        if (exit_thread_h != NULL)
+            TerminateThread(exit_thread_h, -1);
         if (WSACleanup() == SOCKET_ERROR)
             printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
         exit(status);
