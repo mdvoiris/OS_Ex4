@@ -24,9 +24,18 @@
     <ClCompile Include="main_server.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="service_thread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main_server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="service_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HardCodedData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
