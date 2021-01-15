@@ -1,9 +1,5 @@
 //Main Client header
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #ifndef __MAIN_CLIENT_H__
 #define __MAIN_CLIENT_H__
 
@@ -15,15 +11,8 @@
 
 
 //Includes:
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "shared_communication.h"
 #include "HardCodedData.h"
-#include <stdbool.h> 
-#pragma comment(lib, "Ws2_32.lib")
 
 //Typedefs:
 typedef enum _client_action {
@@ -76,7 +65,7 @@ Status main(int argc, char* argv[]);
 void report_error(Status status);
 Status send_level(char* player_name, SOCKET m_socket, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address);
 Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action);
-Status send_string(const char* Str, SOCKET sd);
-Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
+//Status send_string(const char* Str, SOCKET sd);
+//Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
 
 #endif // __MAIN_H__

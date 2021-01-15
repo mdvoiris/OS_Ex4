@@ -27,53 +27,53 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 	return SUCCESS;
 }
 
-Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
-{
-	const char* CurPlacePtr = Buffer;
-	int BytesTransferred;
-	int RemainingBytesToSend = BytesToSend;
-
-	while (RemainingBytesToSend > 0)
-	{
-		/* send does not guarantee that the entire message is sent */
-		BytesTransferred = send(sd, CurPlacePtr, RemainingBytesToSend, 0);
-		if (BytesTransferred == SOCKET_ERROR)
-		{
-			return FAILED_SEND;
-		}
-
-		RemainingBytesToSend -= BytesTransferred;
-		CurPlacePtr += BytesTransferred; // <ISP> pointer arithmetic
-	}
-
-	return SUCCESS;
-}
-
-Status send_string(const char* Str, SOCKET sd)
-{
-	/* Send the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
-	Status SendRes;
-
-	/* The request is sent in two parts. First the Length of the string (stored in
-	   an int variable ), then the string itself. */
-
-	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
-
-	SendRes = SendBuffer(
-		(const char*)(&TotalStringSizeInBytes),
-		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
-		sd);
-
-	if (SendRes != SUCCESS) return SendRes;
-
-	SendRes = SendBuffer(
-		(const char*)(Str),
-		(int)(TotalStringSizeInBytes),
-		sd);
-
-	return SendRes;
-}
+//Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
+//{
+//	const char* CurPlacePtr = Buffer;
+//	int BytesTransferred;
+//	int RemainingBytesToSend = BytesToSend;
+//
+//	while (RemainingBytesToSend > 0)
+//	{
+//		/* send does not guarantee that the entire message is sent */
+//		BytesTransferred = send(sd, CurPlacePtr, RemainingBytesToSend, 0);
+//		if (BytesTransferred == SOCKET_ERROR)
+//		{
+//			return FAILED_SEND;
+//		}
+//
+//		RemainingBytesToSend -= BytesTransferred;
+//		CurPlacePtr += BytesTransferred; // <ISP> pointer arithmetic
+//	}
+//
+//	return SUCCESS;
+//}
+//
+//Status send_string(const char* Str, SOCKET sd)
+//{
+//	/* Send the the request to the server on socket sd */
+//	int TotalStringSizeInBytes;
+//	Status SendRes;
+//
+//	/* The request is sent in two parts. First the Length of the string (stored in
+//	   an int variable ), then the string itself. */
+//
+//	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
+//
+//	SendRes = SendBuffer(
+//		(const char*)(&TotalStringSizeInBytes),
+//		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
+//		sd);
+//
+//	if (SendRes != SUCCESS) return SendRes;
+//
+//	SendRes = SendBuffer(
+//		(const char*)(Str),
+//		(int)(TotalStringSizeInBytes),
+//		sd);
+//
+//	return SendRes;
+//}
 
 Status send_level(char* player_name, SOCKET m_socket, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
