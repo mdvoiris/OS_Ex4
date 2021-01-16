@@ -34,7 +34,7 @@ DWORD WINAPI service_thread(LPVOID lpParam);
 
 Status send_to_client(SOCKET socket, Stage stage, char* message);
 
-Status share_guesses(HANDLE file_mutex, HANDLE opponent_event);
+Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage);
 
 Status calculate_move_results(char** move_results, int buffer_size);
 
