@@ -1,9 +1,27 @@
-﻿  main_client.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(289,62): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(289,50): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(299,71): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(299,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(301,72): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(301,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(190): warning C4715: 'send_level': not all control paths return a value
-  client.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\client.exe
+﻿  shared_communication.c
+  main_client.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\HardCodedData.h(37,5): error C2365: 'MALLOC_FAILED': redefinition; previous definition was 'enumerator'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Share\shared_communication.h(28): message : see declaration of 'MALLOC_FAILED'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\HardCodedData.h(37,18): error C2086: '_status MALLOC_FAILED': redefinition
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\HardCodedData.h(37): message : see declaration of 'MALLOC_FAILED'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(80,43): error C2065: 'str_cpy': undeclared identifier
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(80,43): warning C4047: 'function': 'char **' differs in levels of indirection from 'int *'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(80,35): warning C4024: 'split': different types for formal and actual parameter 3
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(179,35): warning C4047: '==': 'SEND_SERVER *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(321,66): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(321,54): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(323,48): error C2440: 'function': cannot convert from 'SEND_SERVER' to 'SEND_SERVER *'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(323,37): warning C4024: 'send_level': different types for formal and actual parameter 2
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(323,65): error C2440: 'function': cannot convert from 'RECEIVE_SERVER *' to 'RECEIVE_SERVER'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(323,50): warning C4024: 'send_level': different types for formal and actual parameter 3
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(332,74): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(332,54): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(335,76): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(335,55): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(335,92): error C2143: syntax error: missing ';' before '=='
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(335,107): error C2059: syntax error: ')'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(336,5): error C2143: syntax error: missing ';' before 'return'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(359,36): warning C4473: 'printf' : not enough arguments passed for format string
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(359,36): message : placeholders and their parameters expect 1 variadic arguments, but 0 were provided
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(359,36): message : the missing variadic argument 1 is required by format string '%ld'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(359,7): error C2196: case value '3' already used

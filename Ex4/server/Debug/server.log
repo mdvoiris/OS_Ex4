@@ -1,7 +1,4 @@
 ﻿  shared_communication.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Share\shared_communication.c(127,2): error C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Share\shared_communication.c(128,10): error C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Share\shared_communication.c(130,11): error C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   main_server.c
 C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(27,29): error C2065: 'NUM_OF_DIGITS': undeclared identifier
 C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(27,32): error C2057: expected constant expression

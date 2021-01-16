@@ -4,10 +4,11 @@
 #define __HARD_CODED_DATA_H__
 
 //Defines:
-#define MAX_LEN………_SEND 25
+#define MAX_LEN………_SEND 40
 #define MAX_LEN………_RECEIVE 55
 #define SERVER_PORT_LENGTH 4
 #define MAX_PLAYER_NAME 20
+#define USER_ANSWER_LEN 2
 
 
 //Typedefs:
@@ -32,7 +33,9 @@ typedef enum _status {
     FAILED_SEND,
     USER_QUIT,
     USER_EXIT,
-    FAILED_CLOSE_SOCKET
+    FAILED_CLOSE_SOCKET,
+    MALLOC_FAILED,
+    SET_SOCKET_FAILED
 } Status;
 
 

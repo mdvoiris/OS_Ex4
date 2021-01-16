@@ -5,10 +5,10 @@
 Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char* accepted_str = NULL;
-	char* str_cpy = NULL;
+	char* param = NULL;
 	char buffer[MAX_LEN………_RECEIVE];
 	Comm_status recv_res;
-	char send_str[MAX_LEN………_RECEIVE];
+	char send_str[USER_ANSWER_LEN];
 	recv_res = receive_string(&accepted_str, m_socket);
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
@@ -33,53 +33,84 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		}
 
 	}
-	if(split(accepted_str, MASSAGE_TYPE, &str_cpy)!= MALLOC_FAILED)
-	if (!strcmp(str_cpy,"SERVER_GAME_RESULTS"))
+	if (split(accepted_str, MASSAGE_TYPE, &param) == MALLOC_FAILED)
+		return MALLOC_FAILED;
+	if (!strcmp(param,"SERVER_GAME_RESULTS"))
 	{
-		if(split(accepted_str, PARAM_1, &str_cpy)!= MALLOC_FAILED));
+		if(split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
 		    printf("Bulls: %s\n", buffer);
-		if(split(accepted_str, PARAM_2, &str_cpy));
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
+		if(split(accepted_str, PARAM_2, &param))
 		   printf("Cows: %s\n", buffer);
-		if(split(accepted_str, PARAM_3, &str_cpy))
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
+		if(split(accepted_str, PARAM_3, &param))
 		   printf("%s played:", buffer);
-		if(split(accepted_str, PARAM_4, &str_cpy))
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
+		if(split(accepted_str, PARAM_4, &param))
 		   printf("%s\n", buffer);
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_WIN")))
+	else if ((!strcmp(param, "SERVER_WIN")))
 	{
-		split(accepted_str, PARAM_1, &str_cpy);
-		printf("%s won!\n", buffer);
-		split(accepted_str, PARAM_2, &str_cpy);
-		printf("opponents number was %s\n", buffer);
+		if (split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
+		   printf("%s won!\n", buffer);
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
+		if(split(accepted_str, PARAM_2, &str_cpy)!= MALLOC_FAILED)
+		   printf("opponents number was %s\n", buffer);
+		else
+		{
+			free(accepted_str);
+			return MALLOC_FAILED;
+		}
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_DRAW")))
+	else if ((!strcmp(param, "SERVER_DRAW")))
 	{
 		printf("Itís a tie\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_OPPONENT_QUIT")))
+	else if ((!strcmp(param, "SERVER_OPPONENT_QUIT")))
 	{
 		printf("Opponent quit.\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_MAIN_MENU")))
+	else if ((!strcmp(param, "SERVER_MAIN_MENU")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_MAIN_MENU;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_INVITE")))
+	else if ((!strcmp(param, "SERVER_INVITE")))
 	{
 		printf("Game is on!\n");
 		*client_action = RECEIVE;
 		return SUCCESS;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_DINIED")))
+	else if ((!strcmp(param, "SERVER_DINIED")))
 	{
 		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
@@ -92,17 +123,17 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 			*client_action = CONNECT;
 		}
 	}
-	else if ((!strcmp(str_cpy, "SERVER_NO_OPPONENTS")))
+	else if ((!strcmp(param, "SERVER_NO_OPPONENTS")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_MAIN_MENU;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_SETUP_REQUEST")))
+	else if ((!strcmp(param, "SERVER_SETUP_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_SETUP_REQUEST;
 	}
-	else if ((!strcmp(str_cpy, "SERVER_PLAYER_MOVE_REQUEST")))
+	else if ((!strcmp(param, "SERVER_PLAYER_MOVE_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_PLAYER_MOVE_REQUEST;
@@ -114,8 +145,12 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 
 Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action)
 {
-	char send_str[1];
-	closesocket(m_socket);
+	char send_str[USER_ANSWER_LEN];
+	if (closesocket(m_socket) == SOCKET_ERROR)
+		return FAILED_CLOSE_SOCKET;
+	m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (m_socket == INVALID_SOCKET)
+		return FAILED_CREATE_SOCKET;
 	while (1)
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
@@ -138,13 +173,15 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 }
 
 
-Status send_level(char* player_name, SEND_SERVER send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char send_str[MAX_LEN………_SEND];
 	if (send_server == CLIENT_REQUEST)
 	{
 		*client_action = RECEIVE;
-		return send_string(player_name, m_socket);
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_REQUEST:%s\n", player_name);
+		*send_server = CLIENT_INVALID;
+		return send_string(send_str, m_socket);
 	}
 	if (receive_server == SERVER_MAIN_MENU)
 	{
@@ -163,6 +200,7 @@ Status send_level(char* player_name, SEND_SERVER send_server, RECEIVE_SERVER rec
 		printf("Choose your 4 digits:");
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
 		return send_string(send_str, m_socket);
 	}
 	if (receive_server == SERVER_SETUP_REQUEST)
@@ -273,16 +311,17 @@ Status main(int argc, char* argv[])
 		if (client_action == CONNECT)
 		{
 			status = connect_level(client_service, server_port, server_address, &send_server, &client_action);
-			if (status != SUCCESS && status != USER_QUIT && status != USER_EXIT)
+			if (status != SUCCESS)
 				report_error(status);
 			continue;
 		}
 		//send block
 		if (client_action == SEND)
 		{
-			setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int));
-			status = send_level(player_name, send_server, receive_server, &client_action, server_port, server_address);
-			if (status != SUCCESS)
+			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int)) == SOCKET_ERROR)
+				return SET_SOCKET_FAILED;
+			status = send_level(player_name, send_server, &receive_server, &client_action, server_port, server_address);
+			if (status != SUCCESS && status != USER_QUIT)
 				report_error(status);
 			continue;
 		}
@@ -290,12 +329,14 @@ Status main(int argc, char* argv[])
 		if (client_action == RECEIVE)
 		{
 			if (send_server == CLIENT_VERSUS)
-				setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_LONG, sizeof(int));
+				if(setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_LONG, sizeof(int)) == SOCKET_ERROR)
+					return SET_SOCKET_FAILED;
 			else
-				setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int));
+				if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int))) == SOCKET_ERROR)
+				return SET_SOCKET_FAILED;
 			char* AcceptedStr = NULL;
 			status = receive_level(&receive_server, &client_action, server_port, server_address);
-			if (status != SUCCESS)
+			if (status != SUCCESS && status != USER_EXIT)
 				report_error(status);
 			continue;
 		}
@@ -308,11 +349,17 @@ Status main(int argc, char* argv[])
 }
 
 void report_error(Status status) {
-	closesocket(m_socket);
-	WSACleanup();
 	switch (status) {
 	case INVALID_STATUS_CODE: break;//there allready was a print for this case
-	case FAILED_SEND:         printf("Error - Failed at send_function %ld", WSAGetLastError()); break;
+	case FAILED_SEND:          printf("Error - Failed at send_function %ld", WSAGetLastError()); break;
+	case FAILED_CREATE_SOCKET: printf("Error - Failed at socket_function %ld", WSAGetLastError()); exit(status);
+	case FAILED_RECEIVE:       printf("Error - Failed at recv_function %ld", WSAGetLastError()); break;
+	case FAILED_CLOSE_SOCKET:  printf("Error - Failed at close_socket_function %ld", WSAGetLastError()); WSACleanup();exit(status);
+	case FAILED_CONNECT:       printf("Error - Failed at connect_function %ld", WSAGetLastError()); break;
+	case MALLOC_FAILED:        printf("Error - Failed at malloc_function %ld"); break;
+	case SET_SOCKET_FAILED:    printf("Error - Failed at set_socket_function %ld", WSAGetLastError()); break;
 	}
+	closesocket(m_socket);
+	WSACleanup();
 	exit(status);
 }
