@@ -6,6 +6,7 @@
 //Defines:
 #define SERVER_ADDRESS "127.0.0.1"
 #define DEFAULT_TIMEOUT 15000
+#define NUM_OF_DIGITS 4
 
 
 //Typedefs:
@@ -35,5 +36,6 @@ typedef enum _status {
     FOPEN_FAIL,
     ALLOC_FAILED
 } Status;
+
 
 #endif

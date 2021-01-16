@@ -1,21 +1,37 @@
 
 #include "service_thread.h"
 
-DWORD WINAPI service_thread(SOCKET* socket)
+
+//Global veriables:
+const char file_name[] = "GameSession.txt";
+long int cur_file_pos = 0;
+Player client = { 0 };
+Player opponent = { 0 };
+
+
+DWORD WINAPI service_thread(LPVOID lpParam)
 {
 	Status status = INVALID_STATUS_CODE;
 	Comm_status comm_status = INVALID_COMM_STATUS;
+	Client_args* args = (Client_args*)lpParam;
+	SOCKET socket = args->socket;
+	HANDLE file_mutex = args->file_mutex;
+	HANDLE opponent_event = args->opponent_event;
+	HANDLE opponent_disconnect_event = args->opponent_disconnect_event;
 	char* recieved = NULL;
 	char* move_results = NULL;
 	int move_results_size = 0;
 
 
 	//wait for CLIENT_REQUEST
-	comm_status = recieve_sting(&recieved, socket);
+	comm_status = receive_string(&recieved, socket);
 	if (comm_status) { 
 		status = FAILED_TO_RECIEVE_STRING;
 		goto EXIT;
 	}
+
+	//get client name from recieved message
+	split(recieved, PARAM_1, &client.name);
 
 	//send SERVER_APPROVED
 	status = send_to_client(socket, REQUEST, NULL);
@@ -32,7 +48,7 @@ DWORD WINAPI service_thread(SOCKET* socket)
 		}
 
 		//wait for client choice
-		comm_status = recieve_sting(&recieved, socket);
+		comm_status = receive_string(&recieved, socket);
 		if (comm_status) {
 			status = FAILED_TO_RECIEVE_STRING;
 			goto EXIT;
@@ -42,7 +58,7 @@ DWORD WINAPI service_thread(SOCKET* socket)
 		if (recieved == "CLIENT_VERSUS\n") {
 
 			//search for an already connected opponent or wait for one
-			status = look_for_opponent();
+			status = look_for_opponent(file_mutex, opponent_event);
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -71,19 +87,19 @@ DWORD WINAPI service_thread(SOCKET* socket)
 			}
 
 			//wait for client response
-			comm_status = recieve_sting(&recieved, socket);
+			comm_status = receive_string(&recieved, socket);
 			if (comm_status) {
 				status = FAILED_TO_RECIEVE_STRING;
 				goto EXIT;
 			}
 
 			//get client numbers from recieved message
-			//TODO
+			split(recieved, PARAM_1, &client.numbers);
 
 			//allocate space for move results message
 			move_results_size = 2 + strlen(opponent.name) + NUM_OF_DIGITS + 5; //5 = (3*';' + '/n' + '/0')
-			*move_results = (char*)malloc(move_results_size * sizeof(char));
-			if (*move_results == NULL) {
+			move_results = (char*)malloc(move_results_size * sizeof(char));
+			if (move_results == NULL) {
 				status = ALLOC_FAILED;
 				goto EXIT;
 			}
@@ -97,18 +113,18 @@ DWORD WINAPI service_thread(SOCKET* socket)
 				}
 
 				//wait for client response
-				comm_status = recieve_sting(&recieved, socket);
+				comm_status = receive_string(&recieved, socket);
 				if (comm_status) {
 					status = FAILED_TO_RECIEVE_STRING;
 					goto EXIT;
 				}
 
 				//get client guess from recieved message
-				//TODO 
+				split(recieved, PARAM_1, &client.guess);
 
 
 				//get opponent guess and share client guess
-				status = share_guesses();
+				status = share_guesses(file_mutex, opponent_event);
 				if (status) {
 					//if failed because of opponent disconnect go back to main menu
 					if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -141,6 +157,9 @@ DWORD WINAPI service_thread(SOCKET* socket)
 					if (status) {
 						goto EXIT;
 					}
+					if (move_results != NULL)
+						free(move_results);
+					move_results = NULL;
 					//remove session file
 					if (remove(file_name) != 0) {
 						status = FAILED_TO_REMOVE_FILE;
@@ -156,6 +175,9 @@ DWORD WINAPI service_thread(SOCKET* socket)
 					if (status) {
 						goto EXIT;
 					}
+					if (move_results != NULL)
+						free(move_results);
+					move_results = NULL;
 					//remove session file
 					if (remove(file_name) != 0) {
 						status = FAILED_TO_REMOVE_FILE;
@@ -168,11 +190,14 @@ DWORD WINAPI service_thread(SOCKET* socket)
 			}
 		}
 		else {
-			//graceful shutdown
+			//shutdown
+			report_error(status, false);
+			status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+			report_error(status, false);
+			return status;
 		}
 
 	}
-
 
 	return SUCCESS;
 
@@ -273,7 +298,7 @@ Status send_to_client(SOCKET socket, Stage stage, char* message) {
 	return SUCCESS;
 }
 
-Status share_guesses() {
+Status share_guesses(HANDLE file_mutex, HANDLE opponent_event) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	DWORD return_value = 0;
@@ -292,6 +317,10 @@ Status share_guesses() {
 	if (ftell(session_file) != cur_file_pos) {
 
 		//get opponent guess
+		opponent.guess = (char*)malloc(5 * sizeof(char));
+		if (opponent.guess == NULL) {
+			return ALLOC_FAILED;
+		}
 		fseek(session_file, cur_file_pos, SEEK_SET);
 		fgets(opponent.guess, 5, session_file);
 
@@ -331,8 +360,12 @@ Status share_guesses() {
 				return FOPEN_FAIL;
 			}
 
+			opponent.guess = (char*)malloc(5 * sizeof(char));
+			if (opponent.guess == NULL) {
+				return ALLOC_FAILED;
+			}
 			fseek(session_file, cur_file_pos, SEEK_SET);
-			fgets(opponent.name, 5, session_file);
+			fgets(opponent.guess, 5, session_file);
 
 			fseek(session_file, 0, SEEK_END);
 			cur_file_pos = ftell(session_file);
@@ -349,7 +382,7 @@ Status share_guesses() {
 	return SUCCESS;
 }
 
-Status look_for_opponent() {
+Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	int buffer_size = 0;
@@ -398,6 +431,10 @@ Status look_for_opponent() {
 			fseek(session_file, cur_file_pos, SEEK_SET);
 			fgets(opponent.name, buffer_size + 1, session_file);
 
+			opponent.numbers = (char*)malloc(5 * sizeof(char));
+			if (opponent.numbers == NULL) {
+				return ALLOC_FAILED;
+			}
 			fgetc(session_file); //ignore ';'
 			fgets(opponent.numbers, 5, session_file);
 
@@ -434,8 +471,12 @@ Status look_for_opponent() {
 		}
 		fseek(session_file, 0, SEEK_SET);
 		fgets(opponent.name, buffer_size + 1, session_file);
-
 		fgetc(session_file); //ignore ';'
+
+		opponent.numbers = (char*)malloc(5 * sizeof(char));
+		if (opponent.numbers == NULL) {
+			return ALLOC_FAILED;
+		}
 		fgets(opponent.numbers, 5, session_file);
 
 		fseek(session_file, 0, SEEK_END);
