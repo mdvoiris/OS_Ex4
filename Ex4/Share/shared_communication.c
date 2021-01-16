@@ -1,4 +1,4 @@
-
+ï»¿
 #include "shared_communication.h"
 
 Comm_status send_buffer(const char* buffer, int bytes_to_send, SOCKET sd)
@@ -123,7 +123,7 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 void split(char str[], COMM_ARGUMENTS param_mess, char** str_cpy)
 {
 	char* token = NULL;
-	char buffer[MAX_LENÉÉÉ_RECEIVE];
+	char buffer[MAX_LENï¿½ï¿½ï¿½_RECEIVE];
 	strcpy(buffer, str);
 	token = strtok(buffer, ":");
 	for (int j = 0; j < param_mess; j++)

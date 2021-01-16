@@ -5,34 +5,22 @@ DWORD WINAPI service_thread(SOCKET* socket)
 {
 	Status status = INVALID_STATUS_CODE;
 	Comm_status comm_status = INVALID_COMM_STATUS;
-	const char file_name[] = "GameSession.txt";
 	char* recieved = NULL;
 	char* move_results = NULL;
-	char* client_name = NULL;
-	char client_numbers[5] = { 0 };
-	char client_guess[5] = { 0 };
-	char* opponent_name = NULL;
-	char opponent_numbers[5] = { 0 };
-	char opponent_guess[5] = { 0 };
+	int move_results_size = 0;
 
 
 	//wait for CLIENT_REQUEST
-	comm_status = recieve_sting(recieved, socket);
+	comm_status = recieve_sting(&recieved, socket);
 	if (comm_status) { 
 		status = FAILED_TO_RECIEVE_STRING;
-		report_error(status, false);
-		status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-		report_error(status, false);
-		return status;
+		goto EXIT;
 	}
 
 	//send SERVER_APPROVED
 	status = send_to_client(socket, REQUEST, NULL);
 	if (status) {
-		report_error(status, false);
-		status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-		report_error(status, false);
-		return status;
+		goto EXIT;
 	}
 
 	//while client is in
@@ -40,36 +28,36 @@ DWORD WINAPI service_thread(SOCKET* socket)
 		//send SERVER_MAIN_MENU
 		status = send_to_client(socket, MAIN_MENU, NULL);
 		if (status) {
-			report_error(status, false);
-			status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-			report_error(status, false);
-			return status;
+			goto EXIT;
 		}
 
 		//wait for client choice
-		comm_status = recieve_sting(recieved, socket);
+		comm_status = recieve_sting(&recieved, socket);
 		if (comm_status) {
 			status = FAILED_TO_RECIEVE_STRING;
-			report_error(status, false);
-			status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-			report_error(status, false);
-			return status;
+			goto EXIT;
 		}
 
 		//if client chose CLIENT_VERSUS
 		if (recieved == "CLIENT_VERSUS\n") {
 
 			//search for an already connected opponent or wait for one
-			status = look_for_opponent(file_name, client_name, client_numbers, &opponent_name, &opponent_numbers);
+			status = look_for_opponent();
 			if (status) {
-				report_error(status, false);
-				status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-				report_error(status, false);
-				return status;
+				//if failed because of opponent disconnect go back to main menu
+				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+					status = send_to_client(socket, OPPONENT_QUIT, NULL);
+					if (status) {
+						goto EXIT;
+					}
+					ResetEvent(opponent_disconnect_event);
+					continue;
+				}
+				goto EXIT;
 			}
 
 			//if can't find another opponent
-			if (opponent_name == NULL) {
+			if (opponent.name == NULL) {
 				//send SERVER_NO_OPPONENTS
 				status = send_to_client(socket, NO_OPPONENT, NULL);
 				//back to main menu
@@ -77,85 +65,87 @@ DWORD WINAPI service_thread(SOCKET* socket)
 			}
 
 			//send SERVER_INVITE and SERVER_SETUP_REUEST
-			status = send_to_client(socket, SETUP, opponent_name);
+			status = send_to_client(socket, SETUP, opponent.name);
 			if (status) {
-				report_error(status, false);
-				status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-				report_error(status, false);
-				return status;
+				goto EXIT;
 			}
 
 			//wait for client response
-			comm_status = recieve_sting(recieved, socket);
+			comm_status = recieve_sting(&recieved, socket);
 			if (comm_status) {
 				status = FAILED_TO_RECIEVE_STRING;
-				report_error(status, false);
-				status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-				report_error(status, false);
-				return status;
+				goto EXIT;
 			}
 
 			//get client numbers from recieved message
 			//TODO
+
+			//allocate space for move results message
+			move_results_size = 2 + strlen(opponent.name) + NUM_OF_DIGITS + 5; //5 = (3*';' + '/n' + '/0')
+			*move_results = (char*)malloc(move_results_size * sizeof(char));
+			if (*move_results == NULL) {
+				status = ALLOC_FAILED;
+				goto EXIT;
+			}
 
 			//while game is on
 			while (true) {
 				//send SERVER_PLAYER_MOVE_REQUEST
 				status = send_to_client(socket, MOVE, NULL);
 				if (status) {
-					report_error(status, false);
-					status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-					report_error(status, false);
-					return status;
+					goto EXIT;
 				}
 
 				//wait for client response
-				comm_status = recieve_sting(recieved, socket);
+				comm_status = recieve_sting(&recieved, socket);
 				if (comm_status) {
 					status = FAILED_TO_RECIEVE_STRING;
-					report_error(status, false);
-					status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-					report_error(status, false);
-					return status;
+					goto EXIT;
 				}
 
 				//get client guess from recieved message
-				//TODO
-
-				//wait for opponent
-				WaitForSingleObject(opponent_event, INFINITE);
+				//TODO 
 
 
-				//calculate move results and format them as a string
-				status = get_move_results(file_name, &move_results, client_guess);
+				//get opponent guess and share client guess
+				status = share_guesses();
 				if (status) {
-					report_error(status, false);
-					status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-					report_error(status, false);
-					return status;
+					//if failed because of opponent disconnect go back to main menu
+					if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+						status = send_to_client(socket, OPPONENT_QUIT, NULL);
+						if (status) {
+							goto EXIT;
+						}
+						ResetEvent(opponent_disconnect_event);
+						break;
+					}
+					goto EXIT;
 				}
 
-				//if opponent quit
-				if (move_results == 0) {
-					//send SERVER_OPPONENT_QUIT
-					status = send_to_client(socket, OPPONENT_QUIT, NULL);
-					//back to main menu
-					break;
+				//calculate move results and format them in a string
+				status = calculate_move_results(&move_results, move_results_size);
+				if (status) {
+					goto EXIT;
 				}
 
 				//send SERVER_GAME_RESULTS
 				status = send_to_client(socket, RESULT, move_results);
 				if (status) {
-					report_error(status, false);
-					status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-					report_error(status, false);
-					return status;
+					goto EXIT;
 				}
 
 				//if game done by a win
 				if (move_results == "win") {
 					//send SERVER_WIN
 					status = send_to_client(socket, VERDICT, move_results);
+					if (status) {
+						goto EXIT;
+					}
+					//remove session file
+					if (remove(file_name) != 0) {
+						status = FAILED_TO_REMOVE_FILE;
+						goto EXIT;
+					}
 					//back to main menu
 					break;
 				}
@@ -163,6 +153,14 @@ DWORD WINAPI service_thread(SOCKET* socket)
 				else if (move_results = "draw") {
 					//send SERVER_DRAW
 					status = send_to_client(socket, VERDICT, NULL);
+					if (status) {
+						goto EXIT;
+					}
+					//remove session file
+					if (remove(file_name) != 0) {
+						status = FAILED_TO_REMOVE_FILE;
+						goto EXIT;
+					}
 					//back to main menu
 					break;
 				}
@@ -177,6 +175,19 @@ DWORD WINAPI service_thread(SOCKET* socket)
 
 
 	return SUCCESS;
+
+EXIT:
+	//signal opponent that client disconnected
+	if (!SetEvent(opponent_disconnect_event))
+		report_error(FAILED_TO_SET_EVENT, false);
+	if (remove(file_name) != 0)
+		report_error(FAILED_TO_REMOVE_FILE, false);
+	if (move_results != NULL)
+		free(move_results);
+	report_error(status, false);
+	status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+	report_error(status, false);
+	return status;
 }
 
 
@@ -262,22 +273,83 @@ Status send_to_client(SOCKET socket, Stage stage, char* message) {
 	return SUCCESS;
 }
 
-Status get_move_results(const char file_name[], char** move_results, char* client_guess) {
+Status share_guesses() {
 	Status status = INVALID_STATUS_CODE;
+	FILE* session_file = NULL;
+	DWORD return_value = 0;
+
 
 	//get file mutex
 	if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 		return UNRELEASED_MUTEX;
 
+	if ((fopen_s(&session_file, file_name, "rb+")) != 0) {
+		return FOPEN_FAIL;
+	}
+
+	fseek(session_file, 0, SEEK_END);
+	//if opponent entered
+	if (ftell(session_file) != cur_file_pos) {
+
+		//get opponent guess
+		fseek(session_file, cur_file_pos, SEEK_SET);
+		fgets(opponent.guess, 5, session_file);
+
+		//write your guess
+		fseek(session_file, 0, SEEK_END);
+		fprintf_s(session_file, "%s\n", client.guess);
+		cur_file_pos = ftell(session_file);
+
+		fclose(session_file);
+		ReleaseMutex(file_mutex);
+		if (!SetEvent(opponent_event)) {
+			return FAILED_TO_SET_EVENT;
+		}
+	}
+	//opponent didn't enter yet
+	else {
+		fseek(session_file, cur_file_pos, SEEK_SET);
+
+		//write your guess
+		fprintf_s(session_file, "%s;", client.guess);
+		cur_file_pos = ftell(session_file);
+
+		fclose(session_file);
+		ReleaseMutex(file_mutex);
 
 
+		//wait for opponent
+		return_value = WaitForSingleObject(opponent_event, INFINITE);
+		//if opponent entered
+		if (return_value == WAIT_OBJECT_0) {
 
-	ReleaseMutex(file_mutex);
+			//get file mutex
+			if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+				return UNRELEASED_MUTEX;
+
+			if ((fopen_s(&session_file, file_name, "rb")) != 0) {
+				return FOPEN_FAIL;
+			}
+
+			fseek(session_file, cur_file_pos, SEEK_SET);
+			fgets(opponent.name, 5, session_file);
+
+			fseek(session_file, 0, SEEK_END);
+			cur_file_pos = ftell(session_file);
+
+			fclose(session_file);
+			ReleaseMutex(file_mutex);
+			ResetEvent(opponent_event);
+		}
+		else {
+			return FAILED_TO_WAIT;
+		}
+	}
 
 	return SUCCESS;
 }
 
-Status look_for_opponent(const char file_name[], char* client_name, char* client_numbers, char** opponent_name, char* opponent_numbers) {
+Status look_for_opponent() {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	int buffer_size = 0;
@@ -297,7 +369,8 @@ Status look_for_opponent(const char file_name[], char* client_name, char* client
 		}
 
 		//write the client name and numbers
-		fprintf_s(session_file, "%s;%s;", client_name, client_numbers);
+		fprintf_s(session_file, "%s;%s;", client.name, client.numbers);
+		cur_file_pos = ftell(session_file);
 
 		//close file and release
 		fclose(session_file);
@@ -312,63 +385,64 @@ Status look_for_opponent(const char file_name[], char* client_name, char* client
 			if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 				return UNRELEASED_MUTEX;
 
-			if ((fopen_s(&session_file, file_name, "r")) != 0) {
+			if ((fopen_s(&session_file, file_name, "rb")) != 0) {
 				return FOPEN_FAIL;
 			}
 
 			fseek(session_file, 0, SEEK_END);
-			buffer_size = (ftell(session_file) - strlen(client_name) - (2 * 6));
-			*opponent_name = (char*)malloc(buffer_size * sizeof(char));
-			if (*opponent_name == NULL) {
+			buffer_size = (ftell(session_file) - (cur_file_pos + 6));
+			opponent.name = (char*)malloc(buffer_size * sizeof(char));
+			if (opponent.name == NULL) {
 				return ALLOC_FAILED;
 			}
-			fseek(session_file, strlen(client_name) + 6, SEEK_SET);
-			fgets(*opponent_name, buffer_size, session_file);
+			fseek(session_file, cur_file_pos, SEEK_SET);
+			fgets(opponent.name, buffer_size + 1, session_file);
 
 			fgetc(session_file); //ignore ';'
-			fgets(*opponent_numbers, 4, session_file);
+			fgets(opponent.numbers, 5, session_file);
+
+			fseek(session_file, 0, SEEK_END);
+			cur_file_pos = ftell(session_file);
 
 			fclose(session_file);
 			ReleaseMutex(file_mutex);
+			ResetEvent(opponent_event);
 		}
 		//no opponent joined
 		else if (return_value == WAIT_TIMEOUT) {
 			//remove session file
 			if (remove(file_name) != 0)
 				return FAILED_TO_REMOVE_FILE;
+			ResetEvent(opponent_event);
 		}
 		else {
-			//remove session file
-			if (remove(file_name) != 0)
-				return FAILED_TO_REMOVE_FILE;
-
 			return FAILED_TO_WAIT;
 		}
-		ResetEvent(opponent_event);
 	}
 	//if file exists
 	else {
 
-		if ((fopen_s(&session_file, file_name, "r+")) != 0) {
+		if ((fopen_s(&session_file, file_name, "rb+")) != 0) {
 			return FOPEN_FAIL;
 		}
 
 		fseek(session_file, 0, SEEK_END);
 		buffer_size = ftell(session_file) - 6;
-		*opponent_name = (char*)malloc(buffer_size * sizeof(char));
-		if (*opponent_name == NULL) {
+		opponent.name = (char*)malloc(buffer_size * sizeof(char));
+		if (opponent.name == NULL) {
 			return ALLOC_FAILED;
 		}
 		fseek(session_file, 0, SEEK_SET);
-		fgets(*opponent_name, buffer_size, session_file);
+		fgets(opponent.name, buffer_size + 1, session_file);
 
 		fgetc(session_file); //ignore ';'
-		fgets(*opponent_numbers, 4, session_file);
+		fgets(opponent.numbers, 5, session_file);
 
 		fseek(session_file, 0, SEEK_END);
 
 		//write the current user name
-		fprintf_s(session_file, "%s;%s\n", client_name, client_numbers);
+		fprintf_s(session_file, "%s;%s\n", client.name, client.numbers);
+		cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
 
@@ -381,3 +455,25 @@ Status look_for_opponent(const char file_name[], char* client_name, char* client
 	return SUCCESS;
 }
 
+Status calculate_move_results(char** move_results, int buffer_size) {
+	Status status = INVALID_STATUS_CODE;
+	int bulls = 0;
+	int cows = 0;
+
+
+	for (int i = 0; i < NUM_OF_DIGITS; i++) {
+		if (client.guess[i] == opponent.numbers[i]) {
+			bulls++;
+		}
+		else {
+			for (int j = 0; j < NUM_OF_DIGITS; j++) {
+				if (client.guess[i] == opponent.numbers[j])
+					cows++;
+			}
+		}
+	}
+
+	sprintf_s(*move_results, buffer_size, "%d;%d;%s;%s\n", bulls, cows, opponent.name, opponent.guess);
+
+	return SUCCESS;
+}

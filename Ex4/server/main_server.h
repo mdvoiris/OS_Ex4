@@ -13,7 +13,7 @@
 //Defines:
 #define NUM_OF_ARGS 2
 #define NUM_OF_SLOTS 2
-
+#define NUM_OF_DIGITS 4
 
 
 //Global variebles:
@@ -25,6 +25,7 @@ int server_port = 0;
 HANDLE exit_event = NULL;
 HANDLE file_mutex = NULL;
 HANDLE opponent_event = NULL;
+HANDLE opponent_disconnect_event = NULL;
 
 
 //Function Handles:
