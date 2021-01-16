@@ -17,7 +17,6 @@ Status receive_level(RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action
 	else if (recv_res == RECEIVE_DISCONNECTED)
 	{
 		printf("Failed connecting to server on <ip>:<port>.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
-		closesocket(m_socket);
 		gets_s(send_str, sizeof(send_str));
 		if (!strcmp(send_str, "2"))
 		{
@@ -42,6 +41,7 @@ Status receive_level(RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action
 Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action)
 {
 	char send_str[1];
+	closesocket(m_socket);
 	while (1)
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
