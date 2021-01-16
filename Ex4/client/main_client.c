@@ -249,7 +249,7 @@ Status main(int argc, char* argv[])
 	}
 	server_port = atoi(argv[SERVER_PORT]);
 	// if we want to give the player another chance need to add here while(1) loop
-	if (strlen(argv[2]) != SERVER_PORT_LENGTH)
+	if (strlen(argv[SERVER_PORT]) != SERVER_PORT_LENGTH)
 	{
 		printf("Port server number is illegal try again");
 		return ILLEGAL_PORT;
