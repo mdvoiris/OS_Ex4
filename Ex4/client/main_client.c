@@ -295,13 +295,13 @@ Status main(int argc, char* argv[])
 		printf("trying to connect\n"); //REMOVE
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
-			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", argv[SERVER_ADDRESS], server_port);
+			printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", argv[SERVER_ADDRESS], server_port);
 			gets_s(send_str, sizeof(send_str)); //Reading a string from the keyboard
 			if (STRINGS_ARE_EQUAL(send_str, "1"))
 				continue;
 			else if (STRINGS_ARE_EQUAL(send_str, "2"))
 			{
-				report_error(FAILED_CONNECT);
+				return SUCCESS;
 			}
 		}
 		else
