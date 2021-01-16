@@ -119,3 +119,14 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 
 	return RecvRes;
 }
+
+void split(char str[], int i, char** str_cpy)
+{
+	char* token = NULL;
+	char buffer[35];
+	strcpy(buffer, str);
+	token = strtok(buffer, ":");
+	for (int j = 0; j < i; j++)
+		token = strtok(NULL, ";");
+	*str_cpy = token;
+}

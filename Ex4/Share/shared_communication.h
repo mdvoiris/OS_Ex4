@@ -37,5 +37,6 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd);
 
 Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd);
 
+void split(char str[], int i, char** str_cpy);
 
 #endif
