@@ -33,7 +33,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		}
 
 	}
-	if(split(accepted_str, MASSAGE_TYPE, &str_cpy);
+	if(split(accepted_str, MASSAGE_TYPE, &str_cpy)!= MALLOC_FAILED)
 	if (!strcmp(str_cpy,"SERVER_GAME_RESULTS"))
 	{
 		if(split(accepted_str, PARAM_1, &str_cpy)!= MALLOC_FAILED));

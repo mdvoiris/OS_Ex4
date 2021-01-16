@@ -45,6 +45,6 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd);
 
 Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd);
 
-Comm_status split(char str[], COMM_ARGUMENTS i, char** str_cpy);
+Comm_status split(char* message, COMM_ARGUMENTS comm_argument, char** param);
 
 #endif
