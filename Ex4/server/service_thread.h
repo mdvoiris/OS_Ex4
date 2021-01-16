@@ -22,14 +22,24 @@ typedef enum _stage {
 	VERDICT
 }Stage;
 
+typedef struct _player {
+	char* name;
+	char numbers[5]; //4 +'\0'
+}Player;
+
+//Global veriables:
+const char file_name[] = "GameSession.txt";
+Player client = { 0 };
+Player opponent = { 0 };
+
 
 //Function Handles:
 DWORD WINAPI service_thread(SOCKET* socket);
 
 Status send_to_client(SOCKET socket, Stage stage, char* message);
 
-Status get_move_results(const char file_name[], char** move_results, char* client_guess);
+Status get_move_results(char** move_results, char* client_guess);
 
-Status look_for_opponent(const char file_name[], char* client_name, char* client_numbers, char** opponent_name, char* opponent_numbers);
+Status look_for_opponent();
 
 #endif
