@@ -1,70 +1,70 @@
 
 #include "shared_communication.h"
 
-Comm_status send_buffer(const char* Buffer, int BytesToSend, SOCKET sd)
+Comm_status send_buffer(const char* buffer, int bytes_to_send, SOCKET sd)
 {
-	const char* CurPlacePtr = Buffer;
-	int BytesTransferred;
-	int RemainingBytesToSend = BytesToSend;
+	const char* cur_place_ptr = buffer;
+	int bytes_trans_ferred;
+	int remaining_bytes_to_send = bytes_to_send;
 
-	while (RemainingBytesToSend > 0)
+	while (remaining_bytes_to_send > 0)
 	{
 		/* send does not guarantee that the entire message is sent */
-		BytesTransferred = send(sd, CurPlacePtr, RemainingBytesToSend, 0);
-		if (BytesTransferred == SOCKET_ERROR)
+		bytes_trans_ferred = send(sd, cur_place_ptr, remaining_bytes_to_send, 0);
+		if (bytes_trans_ferred == SOCKET_ERROR)
 		{
 			return COMM_FAILED;
 		}
 
-		RemainingBytesToSend -= BytesTransferred;
-		CurPlacePtr += BytesTransferred; // <ISP> pointer arithmetic
+		remaining_bytes_to_send -= bytes_trans_ferred;
+		cur_place_ptr += bytes_trans_ferred; // <ISP> pointer arithmetic
 	}
 
 	return COMM_SUCCESS;
 }
 
-Comm_status send_string(const char* Str, SOCKET sd)
+Comm_status send_string(const char* str, SOCKET sd)
 {
 	/* Send the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
-	Comm_status SendRes;
+	int total_string_size_in_bytes;
+	Comm_status send_res;
 
 	/* The request is sent in two parts. First the Length of the string (stored in
 	   an int variable ), then the string itself. */
 
-	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
+	total_string_size_in_bytes = (int)(strlen(str) + 1); // terminating zero also sent	
 
-	SendRes = send_buffer(
-		(const char*)(&TotalStringSizeInBytes),
-		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
+	send_res = send_buffer(
+		(const char*)(&total_string_size_in_bytes),
+		(int)(sizeof(total_string_size_in_bytes)), // sizeof(int) 
 		sd);
 
-	if (SendRes != COMM_SUCCESS) return SendRes;
+	if (send_res != COMM_SUCCESS) return send_res;
 
-	SendRes = send_buffer(
-		(const char*)(Str),
-		(int)(TotalStringSizeInBytes),
+	send_res = send_buffer(
+		(const char*)(str),
+		(int)(total_string_size_in_bytes),
 		sd);
 
-	return SendRes;
+	return send_res;
 }
 
-Comm_status ReceiveBuffer(char* OutputBuffer, int BytesToReceive, SOCKET sd)
+Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd)
 {
-	char* CurPlacePtr = OutputBuffer;
-	int BytesJustTransferred;
-	int RemainingBytesToReceive = BytesToReceive;
+	char* cur_place_ptr = out_put_buffer;
+	int bytes_just_trans_ferred;
+	int remaining_bytes_to_Receive = bytes_to_receive;
 
-	while (RemainingBytesToReceive > 0)
+	while (remaining_bytes_to_Receive > 0)
 	{
 		/* send does not guarantee that the entire message is sent */
-		BytesJustTransferred = recv(sd, CurPlacePtr, RemainingBytesToReceive, 0);
-		if (BytesJustTransferred == 0 || WSAGetLastError() == WSAETIMEDOUT)
+		bytes_just_trans_ferred = recv(sd, cur_place_ptr, remaining_bytes_to_Receive, 0);
+		if (bytes_just_trans_ferred == 0 || WSAGetLastError() == WSAETIMEDOUT)
 			return RECEIVE_DISCONNECTED; // recv() returns zero if connection was gracefully disconnected.
-     	else if (BytesJustTransferred == SOCKET_ERROR)
+     	else if (bytes_just_trans_ferred == SOCKET_ERROR)
 			return COMM_FAILED;
-		RemainingBytesToReceive -= BytesJustTransferred;
-		CurPlacePtr += BytesJustTransferred; // <ISP> pointer arithmetic
+		remaining_bytes_to_Receive -= bytes_just_trans_ferred;
+		cur_place_ptr += bytes_just_trans_ferred; // <ISP> pointer arithmetic
 	}
 
 	return COMM_SUCCESS;
@@ -72,14 +72,14 @@ Comm_status ReceiveBuffer(char* OutputBuffer, int BytesToReceive, SOCKET sd)
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-Comm_status ReceiveString(char** OutputStrPtr, SOCKET sd)
+Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 {
 	/* Recv the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
+	int total_string_size_in_bytes;
 	Comm_status RecvRes;
-	char* StrBuffer = NULL;
+	char* str_buffer = NULL;
 
-	if ((OutputStrPtr == NULL) || (*OutputStrPtr != NULL))
+	if ((out_put_str_ptr == NULL) || (*out_put_str_ptr != NULL))
 	{
 		printf("The first input to ReceiveString() must be "
 			"a pointer to a char pointer that is initialized to NULL. For example:\n"
@@ -92,29 +92,29 @@ Comm_status ReceiveString(char** OutputStrPtr, SOCKET sd)
 	   an int variable ), then the string itself. */
 
 	RecvRes = ReceiveBuffer(
-		(char*)(&TotalStringSizeInBytes),
-		(int)(sizeof(TotalStringSizeInBytes)), // 4 bytes
+		(char*)(&total_string_size_in_bytes),
+		(int)(sizeof(total_string_size_in_bytes)), // 4 bytes
 		sd);
 
 	if (RecvRes != COMM_SUCCESS) return RecvRes;
 
-	StrBuffer = (char*)malloc(TotalStringSizeInBytes * sizeof(char));
+	str_buffer = (char*)malloc(total_string_size_in_bytes * sizeof(char));
 
-	if (StrBuffer == NULL)
+	if (str_buffer == NULL)
 		return MALLOC_FAILED;
 
 	RecvRes = ReceiveBuffer(
-		(char*)(StrBuffer),
-		(int)(TotalStringSizeInBytes),
+		(char*)(str_buffer),
+		(int)(total_string_size_in_bytes),
 		sd);
 
 	if (RecvRes == COMM_SUCCESS)
 	{
-		*OutputStrPtr = StrBuffer;
+		*out_put_str_ptr = str_buffer;
 	}
 	else
 	{
-		free(StrBuffer);
+		free(str_buffer);
 	}
 
 	return RecvRes;

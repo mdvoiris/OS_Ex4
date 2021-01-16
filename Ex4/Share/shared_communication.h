@@ -29,8 +29,13 @@ typedef enum _comm_status {
 
 
 //Function handles:
-Comm_status send_buffer(const char* Buffer, int BytesToSend, SOCKET sd);
+Comm_status send_buffer(const char* buffer, int bytes_to_send, SOCKET sd);
 
-Comm_status send_string(const char* Str, SOCKET sd);
+Comm_status send_string(const char* str, SOCKET sd);
+
+Comm_status receive_string(char** out_put_str_ptr, SOCKET sd);
+
+Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd);
+
 
 #endif
