@@ -1,0 +1,6 @@
+﻿  shared_communication.c
+  main_server.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\main_server.h(8,10): fatal error C1083: Cannot open include file: 'shared_communication.h': No such file or directory
+  service_thread.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(8,10): fatal error C1083: Cannot open include file: 'shared_communication.h': No such file or directory
+  Generating Code...
