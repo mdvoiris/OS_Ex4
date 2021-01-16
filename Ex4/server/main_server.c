@@ -148,27 +148,38 @@ Status admit_clients() {
         AcceptSocket = accept(MainSocket, NULL, NULL);
         if (AcceptSocket == INVALID_SOCKET)
         {
-            //if exit called' return success
+            //if exit called, return success
             if (WaitForSingleObject(exit_event, 0) == WAIT_OBJECT_0) {
                 clients_cleanup(client_args);
                 return SUCCESS;
             }
-            //otherwise unexpeced error
+            //otherwise unexpected error
             else {
                 clients_cleanup(client_args);
                 return FAILED_TO_ACCEPT_SOCKET;
             }
         }
 
+        //if reached maximum clients
         if (client_count >= NUM_OF_SLOTS) {
+            //dissmiss client
             status = dismiss_client(AcceptSocket);
             if (status) {
                 clients_cleanup(client_args);
                 return status;
             }
         }
-
-        index = (client_thread_h[0] == NULL) ? 0 : 1;
+        //if not first
+        else if (client_thread_h[0] != NULL) {
+            //if second
+            if (client_thread_h[1] == NULL) {
+                index = 1;
+                break;
+            }
+            //after that
+            //if thread 0 finished index = 0; else index = 1
+            index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : 1;
+        }
 
         sockets_h[index] = AcceptSocket;
         client_args.socket = AcceptSocket;
@@ -177,7 +188,7 @@ Status admit_clients() {
             NULL,                   // default security attributes
             0,                      // use default stack size  
             service_thread,         // thread function name
-            &(client_args),    // argument to thread function 
+            &(client_args),         // argument to thread function 
             0,                      // use default creation flags 
             NULL);
 
@@ -186,6 +197,7 @@ Status admit_clients() {
             return FAILED_TO_CREATE_THREAD;
         }
 
+        client_count++;
     }
 
 
@@ -235,8 +247,15 @@ DWORD WINAPI monitor_exit(HANDLE main_thread_h) {
 
 Status dismiss_client(AcceptSocket) {
     Status status = INVALID_STATUS_CODE;
+    Comm_status comm_status = INVALID_COMM_STATUS;
 
-    //TODO
+    comm_status = send_string("SERVER_DENIED;Reached max of 2 clients\n", socket);
+    if (comm_status) {
+        return FAILED_TO_SEND_STRING;
+    }
+    //close MainSocket
+    status = (closesocket(AcceptSocket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+    report_error(status, false);
 
     return SUCCESS;
 }
