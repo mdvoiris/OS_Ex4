@@ -225,7 +225,7 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 
 
 
-Status main_client(int argc, char* argv[])
+Status main(int argc, char* argv[])
 {
 	char player_name[MAX_PLAYER_NAME];
 	int set_socket_status;
