@@ -34,7 +34,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 
 	}
 	if (split(accepted_str, MASSAGE_TYPE, &param) == MALLOC_FAILED)
-		return MALLOC_FAILED;
+		return ALLOCTION_FAILED;
 	if (!strcmp(param,"SERVER_GAME_RESULTS"))
 	{
 		if(split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
@@ -42,28 +42,28 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
 		if(split(accepted_str, PARAM_2, &param))
 		   printf("Cows: %s\n", buffer);
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
 		if(split(accepted_str, PARAM_3, &param))
 		   printf("%s played:", buffer);
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
 		if(split(accepted_str, PARAM_4, &param))
 		   printf("%s\n", buffer);
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
 		free(accepted_str);
 		return SUCCESS;
@@ -75,14 +75,14 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
-		if(split(accepted_str, PARAM_2, &str_cpy)!= MALLOC_FAILED)
+		if(split(accepted_str, PARAM_2, &param)!= MALLOC_FAILED)
 		   printf("opponents number was %s\n", buffer);
 		else
 		{
 			free(accepted_str);
-			return MALLOC_FAILED;
+			return ALLOCTION_FAILED;
 		}
 		free(accepted_str);
 		return SUCCESS;
@@ -227,7 +227,8 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 
 Status main(int argc, char* argv[])
 {
-	char player_name[20];
+	char player_name[MAX_PLAYER_NAME];
+	int set_socket_status;
 	CLIENT_ACTION client_action = SEND;
 	Status status = SUCCESS;
 	SOCKADDR_IN client_service;
@@ -236,7 +237,7 @@ Status main(int argc, char* argv[])
 	int server_port;
 	long server_address;
 	RECEIVE_SERVER receive_server = INVALID_STATUS_CODE;
-	char send_str[1];
+	char send_str[USER_ANSWER_LEN];
 	WSADATA wsaData; //Create a WSADATA object called wsaData.
 //The WSADATA structure contains information about the Windows Sockets implementation.
 
@@ -320,7 +321,7 @@ Status main(int argc, char* argv[])
 		{
 			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int)) == SOCKET_ERROR)
 				return SET_SOCKET_FAILED;
-			status = send_level(player_name, send_server, &receive_server, &client_action, server_port, server_address);
+			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS && status != USER_QUIT)
 				report_error(status);
 			continue;
@@ -329,11 +330,17 @@ Status main(int argc, char* argv[])
 		if (client_action == RECEIVE)
 		{
 			if (send_server == CLIENT_VERSUS)
-				if(setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_LONG, sizeof(int)) == SOCKET_ERROR)
+			{
+				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_LONG, sizeof(int));
+				if (set_socket_status == SOCKET_ERROR)
 					return SET_SOCKET_FAILED;
+			}
 			else
-				if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int))) == SOCKET_ERROR)
-				return SET_SOCKET_FAILED;
+			{
+				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int));
+				if (set_socket_status == SOCKET_ERROR)
+					return SET_SOCKET_FAILED;
+			}
 			char* AcceptedStr = NULL;
 			status = receive_level(&receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS && status != USER_EXIT)
@@ -356,7 +363,7 @@ void report_error(Status status) {
 	case FAILED_RECEIVE:       printf("Error - Failed at recv_function %ld", WSAGetLastError()); break;
 	case FAILED_CLOSE_SOCKET:  printf("Error - Failed at close_socket_function %ld", WSAGetLastError()); WSACleanup();exit(status);
 	case FAILED_CONNECT:       printf("Error - Failed at connect_function %ld", WSAGetLastError()); break;
-	case MALLOC_FAILED:        printf("Error - Failed at malloc_function %ld"); break;
+	case ALLOCTION_FAILED:     printf("Error - Failed at malloc_function"); break;
 	case SET_SOCKET_FAILED:    printf("Error - Failed at set_socket_function %ld", WSAGetLastError()); break;
 	}
 	closesocket(m_socket);

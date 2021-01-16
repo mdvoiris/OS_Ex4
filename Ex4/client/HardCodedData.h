@@ -34,7 +34,7 @@ typedef enum _status {
     USER_QUIT,
     USER_EXIT,
     FAILED_CLOSE_SOCKET,
-    MALLOC_FAILED,
+    ALLOCTION_FAILED,
     SET_SOCKET_FAILED
 } Status;
 
