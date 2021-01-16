@@ -113,12 +113,13 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 
 Comm_status split(char* message, COMM_ARGUMENTS comm_argument, char** param)
 {
-	char* token = NULL;
+	char* token;
+	char* next_token;
 	char buffer[MAX_LENֹֹֹ_RECEIVE];
-	strcpy(buffer, message);
-	token = strtok(buffer, ":");
+	strcpy_s(buffer, MAX_LENֹֹֹ_RECEIVE, message);
+	token = strtok_s(buffer, ":", &next_token);
 	for (int j = 0; j < comm_argument; j++)
-		token = strtok(NULL, ";");
+		token = strtok_s(NULL, ";", &next_token);
 	*param = (char*)malloc(sizeof(char) * (strlen(token) + 1));
 	if (*param == NULL)
 	{

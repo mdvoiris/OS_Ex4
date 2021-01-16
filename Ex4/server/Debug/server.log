@@ -1,8 +1,2 @@
 ﻿  shared_communication.c
-  main_server.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\main_server.c(261,81): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET (__stdcall *)(int,int,int)'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\main_server.c(261,75): warning C4024: 'send_string': different types for formal and actual parameter 2
-  service_thread.c
-  Generating Code...
-  LINK : C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\server.exe not found or not built by the last incremental link; performing full link
   server.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\server.exe
