@@ -2,21 +2,33 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "main_client.h"
-Status receive_level(RECEIVE_SERVER receive_serve, CLIENT_ACTION* client_action)
+Status receive_level(RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char* AcceptedStr = NULL;
 	Comm_status recv_res;
-
+	char send_str[MAX_LEN………_RECEIVE];
 	recv_res = receive_string(&AcceptedStr, m_socket);
-
+	if (recv_res == INVALID_COMM_STATUS)
+		return INVALID_STATUS_CODE;
 	if (recv_res == COMM_FAILED)
 	{
 		return FAILED_RECEIVE;
 	}
 	else if (recv_res == RECEIVE_DISCONNECTED)
 	{
-		printf("Server closed connection. Bye!\n");
-		return 0x555;
+		printf("Failed connecting to server on <ip>:<port>.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+		closesocket(m_socket);
+		gets_s(send_str, sizeof(send_str));
+		if (!strcmp(send_str, "2"))
+		{
+			return USER_EXIT;
+		}
+		else
+		{
+			client_action = CONNECT;
+			return SUCCESS;
+		}
+
 	}
 	else
 	{
@@ -51,53 +63,6 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 	return SUCCESS;
 }
 
-//Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
-//{
-//	const char* CurPlacePtr = Buffer;
-//	int BytesTransferred;
-//	int RemainingBytesToSend = BytesToSend;
-//
-//	while (RemainingBytesToSend > 0)
-//	{
-//		/* send does not guarantee that the entire message is sent */
-//		BytesTransferred = send(sd, CurPlacePtr, RemainingBytesToSend, 0);
-//		if (BytesTransferred == SOCKET_ERROR)
-//		{
-//			return FAILED_SEND;
-//		}
-//
-//		RemainingBytesToSend -= BytesTransferred;
-//		CurPlacePtr += BytesTransferred; // <ISP> pointer arithmetic
-//	}
-//
-//	return SUCCESS;
-//}
-//
-//Status send_string(const char* Str, SOCKET sd)
-//{
-//	/* Send the the request to the server on socket sd */
-//	int TotalStringSizeInBytes;
-//	Status SendRes;
-//
-//	/* The request is sent in two parts. First the Length of the string (stored in
-//	   an int variable ), then the string itself. */
-//
-//	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
-//
-//	SendRes = SendBuffer(
-//		(const char*)(&TotalStringSizeInBytes),
-//		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
-//		sd);
-//
-//	if (SendRes != SUCCESS) return SendRes;
-//
-//	SendRes = SendBuffer(
-//		(const char*)(Str),
-//		(int)(TotalStringSizeInBytes),
-//		sd);
-//
-//	return SendRes;
-//}
 
 Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
@@ -109,7 +74,7 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 	}
 	if (receive_server == SERVER_MAIN_MENU)
 	{
-		printf("Choose what to do next:\n1. Play against another client\n2. Quit");
+		printf("Choose what to do next:\n1. Play against another client\n2. Quit\n");
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
 		if (!strcmp(send_str, "2"))
@@ -122,14 +87,14 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 	}
 	if (receive_server == SERVER_INVITE)// moove to receive block
 	{
-		printf("Game is on!");
+		printf("Game is on!\n");
 		*client_action = RECEIVE;
 		return SUCCESS;
 	}
 	if (receive_server == SERVER_DENIED)
 	{
 		closesocket(m_socket);
-		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit", server_address, server_port);
+		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
 		if (!strcmp(send_str,"2"))
 		{
@@ -282,7 +247,7 @@ Status main(int argc, char* argv[])
 			else
 				setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int));
 			char* AcceptedStr = NULL;
-			status = receive_level(&receive_server, &client_action);
+			status = receive_level(&receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS)
 				report_error(status);
 			continue;
@@ -292,9 +257,6 @@ Status main(int argc, char* argv[])
 
 	closesocket(m_socket);
 	WSACleanup();
-
-
-
 	return SUCCESS;
 }
 
@@ -302,6 +264,7 @@ void report_error(Status status) {
 	closesocket(m_socket);
 	WSACleanup();
 	switch (status) {
+	case INVALID_STATUS_CODE: break;//there allready was a print for this case
 	case FAILED_SEND:         printf("Error - Failed at send_function %ld", WSAGetLastError()); break;
 	}
 	exit(status);
