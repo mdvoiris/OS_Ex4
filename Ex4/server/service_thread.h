@@ -40,4 +40,6 @@ Status calculate_move_results(char** move_results, int buffer_size);
 
 Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event);
 
+Status get_verdict(char** match_verdict);
+
 #endif

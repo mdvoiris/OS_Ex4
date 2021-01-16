@@ -5,6 +5,7 @@
 //Global veriables:
 const char file_name[] = "GameSession.txt";
 long int cur_file_pos = 0;
+bool file_exists = false;
 Player client = { 0 };
 Player opponent = { 0 };
 
@@ -20,6 +21,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 	HANDLE opponent_disconnect_event = args->opponent_disconnect_event;
 	char* recieved = NULL;
 	char* move_results = NULL;
+	char* match_verdict = NULL;
 	int move_results_size = 0;
 
 
@@ -156,65 +158,56 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					goto EXIT;
 				}
 
-				//if game done by a win
-				if (move_results == "win") {
-					//send SERVER_WIN
-					status = send_to_client(socket, VERDICT, move_results);
-					if (status) {
-						goto EXIT;
-					}
-					if (move_results != NULL)
-						free(move_results);
-					move_results = NULL;
-					//remove session file
-					if (remove(file_name) != 0) {
-						status = FAILED_TO_REMOVE_FILE;
-						goto EXIT;
-					}
-					//back to main menu
-					break;
-				}
-				//if game done by a draw
-				else if (move_results = "draw") {
-					//send SERVER_DRAW
-					status = send_to_client(socket, VERDICT, NULL);
-					if (status) {
-						goto EXIT;
-					}
-					if (move_results != NULL)
-						free(move_results);
-					move_results = NULL;
-					//remove session file
-					if (remove(file_name) != 0) {
-						status = FAILED_TO_REMOVE_FILE;
-						goto EXIT;
-					}
-					//back to main menu
-					break;
+				//get move verdict
+				status = get_verdict(&match_verdict);
+				if (status) {
+					goto EXIT;
 				}
 
+				//if game done
+				if (match_verdict != NULL) {
+					//send SERVER_DRAW/SERVER_WIN
+					status = send_to_client(socket, VERDICT, match_verdict);
+					if (status) {
+						goto EXIT;
+					}
+					free(move_results);
+					free(match_verdict);
+					move_results = NULL;
+					match_verdict = NULL;
+					//remove session file
+					if (remove(file_name) != 0) {
+						status = FAILED_TO_REMOVE_FILE;
+						goto EXIT;
+					}
+					file_exists = false;
+					//back to main menu
+					break;
+				}
 			}
 		}
 		else {
-			//shutdown
-			report_error(status, false);
-			status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-			report_error(status, false);
-			return status;
+			status = SUCCESS;
+			goto EXIT;
 		}
 
 	}
 
 	return SUCCESS;
 
+
 EXIT:
 	//signal opponent that client disconnected
 	if (!SetEvent(opponent_disconnect_event))
 		report_error(FAILED_TO_SET_EVENT, false);
-	if (remove(file_name) != 0)
-		report_error(FAILED_TO_REMOVE_FILE, false);
+	if (file_exists) {
+		if (remove(file_name) != 0)
+			report_error(FAILED_TO_REMOVE_FILE, false);
+	}
 	if (move_results != NULL)
 		free(move_results);
+	if (match_verdict != NULL)
+		free(match_verdict);
 	report_error(status, false);
 	status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
 	report_error(status, false);
@@ -277,16 +270,16 @@ Status send_to_client(SOCKET socket, Stage stage, char* message) {
 		break;
 	}
 	case VERDICT: {
-		if (message == NULL) {
-			comm_status = send_string("SERVER_DRAW\n", socket);
+		if (strcmp(message, "SERVER_DRAW\n") == 0) {
+			comm_status = send_string(message, socket);
 		}
 		else {
-			buffer_size = (strlen("SERVER_DRAW:\n") + strlen(message) + 1);
+			buffer_size = (strlen("SERVER_WIN:\n") + strlen(message) + 1);
 			buffer = (char*)malloc(buffer_size * sizeof(char));
 			if (buffer == NULL) {
 				return ALLOC_FAILED;
 			}
-			sprintf_s(buffer, buffer_size, "SERVER_DRAW:%s\n", message);
+			sprintf_s(buffer, buffer_size, "SERVER_WIN:%s\n", message);
 			comm_status = send_string(buffer, socket);
 		}
 		break;
@@ -406,6 +399,7 @@ Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 		if ((fopen_s(&session_file, file_name, "w")) != 0) {
 			return FOPEN_FAIL;
 		}
+		file_exists = true;
 
 		//write the client name and numbers
 		fprintf_s(session_file, "%s;%s;", client.name, client.numbers);
@@ -520,7 +514,43 @@ Status calculate_move_results(char** move_results, int buffer_size) {
 		}
 	}
 
-	sprintf_s(*move_results, buffer_size, "%d;%d;%s;%s\n", bulls, cows, opponent.name, opponent.guess);
+	sprintf_s(*move_results, buffer_size, "%d;%d;%s;%s", bulls, cows, opponent.name, opponent.guess);
+
+	return SUCCESS;
+}
+
+Status get_verdict(char** match_verdict) {
+	Status status = INVALID_STATUS_CODE;
+	int buffer_size = 0;
+
+	//if draw
+	if ((strcmp(client.guess, opponent.numbers) == 0) && (strcmp(opponent.guess, client.numbers) == 0)) {
+		buffer_size = strlen("SERVER_DRAW\n") + 1;
+		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
+		if (*match_verdict == NULL) {
+			return ALLOC_FAILED;
+		}
+		sprintf_s(*match_verdict, buffer_size, "SERVER_DRAW\n");
+	}
+	//else if client wins
+	else if (strcmp(client.guess, opponent.numbers) == 0) {
+		buffer_size = (strlen(client.name) + NUM_OF_DIGITS + 2);
+		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
+		if (*match_verdict == NULL) {
+			return ALLOC_FAILED;
+		}
+		sprintf_s(*match_verdict, buffer_size, "%s;%s", client.name, opponent.numbers);
+	}
+	//else if opponent wins
+	else if (strcmp(opponent.guess, opponent.numbers) == 0) {
+		buffer_size = (strlen(opponent.name) + NUM_OF_DIGITS + 2);
+		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
+		if (*match_verdict == NULL) {
+			return ALLOC_FAILED;
+		}
+		sprintf_s(*match_verdict, buffer_size, "%s;%s", opponent.name, opponent.numbers);
+	}
+
 
 	return SUCCESS;
 }

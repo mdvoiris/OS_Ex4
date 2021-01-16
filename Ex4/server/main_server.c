@@ -171,6 +171,7 @@ Status admit_clients() {
                 return status;
             }
         }
+
         //if not first
         else if (client_thread_h[0] != NULL) {
             //if second
@@ -189,6 +190,8 @@ Status admit_clients() {
 
         sockets_h[index] = AcceptSocket;
         client_args.socket = AcceptSocket;
+        ResetEvent(client_args.opponent_event);
+        ResetEvent(client_args.opponent_disconnect_event);
 
         client_thread_h[index] = CreateThread(
             NULL,                   // default security attributes
