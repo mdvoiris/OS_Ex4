@@ -1,34 +1,6 @@
-﻿  shared_communication.c
-  main_server.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(27,29): error C2065: 'NUM_OF_DIGITS': undeclared identifier
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(27,32): error C2057: expected constant expression
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(28,27): error C2065: 'NUM_OF_DIGITS': undeclared identifier
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(28,30): error C2057: expected constant expression
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.h(28,31): error C2229: struct '_player' has an illegal zero-sized array
+﻿  main_server.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\main_server.c(252,81): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET (__stdcall *)(int,int,int)'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\main_server.c(252,75): warning C4024: 'send_string': different types for formal and actual parameter 2
   service_thread.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(14,29): warning C4013: 'recieve_sting' undefined; assuming extern returning int
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(21,32): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(21,26): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(29,33): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(29,27): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(49,36): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(49,30): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(62,35): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(62,29): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(68,34): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(68,28): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(85,67): warning C4047: '=': 'char' differs in levels of indirection from 'char *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(86,29): warning C4047: '==': 'int' differs in levels of indirection from 'void *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(94,35): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(94,29): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(115,37): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(115,31): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(132,35): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(132,29): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(140,36): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(140,30): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(155,36): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(155,30): warning C4024: 'send_to_client': different types for formal and actual parameter 1
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(188,30): warning C4047: 'function': 'SOCKET' differs in levels of indirection from 'SOCKET *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\server\service_thread.c(188,24): warning C4024: 'closesocket': different types for formal and actual parameter 1
   Generating Code...
+  server.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\server.exe

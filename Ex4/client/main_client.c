@@ -176,7 +176,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char send_str[MAX_LEN………_SEND];
-	if (send_server == CLIENT_REQUEST)
+	if (*send_server == CLIENT_REQUEST)
 	{
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_REQUEST:%s\n", player_name);
@@ -219,6 +219,7 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", send_str);
 		return send_string(send_str, m_socket);
 	}
+	return SUCCESS;
 }
 
 
@@ -231,13 +232,14 @@ Status main(int argc, char* argv[])
 	int set_socket_status;
 	CLIENT_ACTION client_action = SEND;
 	Status status = SUCCESS;
-	SOCKADDR_IN client_service;
+	SOCKADDR_IN client_service = { 0 };
 	SEND_SERVER send_server = CLIENT_REQUEST;
 	int iResult;
 	int server_port;
 	long server_address;
 	RECEIVE_SERVER receive_server = INVALID_STATUS_CODE;
 	char send_str[USER_ANSWER_LEN];
+	int timeout = TIMEOUT_SEND;
 	WSADATA wsaData; //Create a WSADATA object called wsaData.
 //The WSADATA structure contains information about the Windows Sockets implementation.
 
@@ -319,7 +321,8 @@ Status main(int argc, char* argv[])
 		//send block
 		if (client_action == SEND)
 		{
-			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int)) == SOCKET_ERROR)
+			timeout = TIMEOUT_SEND;
+			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
 				return SET_SOCKET_FAILED;
 			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS && status != USER_QUIT)
@@ -331,13 +334,15 @@ Status main(int argc, char* argv[])
 		{
 			if (send_server == CLIENT_VERSUS)
 			{
-				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_LONG, sizeof(int));
+				timeout = TIMEOUT_RECEIVE_LONG;
+				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
 				if (set_socket_status == SOCKET_ERROR)
 					return SET_SOCKET_FAILED;
 			}
 			else
 			{
-				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_RECEIVE_SHORT, sizeof(int));
+				timeout = TIMEOUT_RECEIVE_SHORT;
+				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
 				if (set_socket_status == SOCKET_ERROR)
 					return SET_SOCKET_FAILED;
 			}

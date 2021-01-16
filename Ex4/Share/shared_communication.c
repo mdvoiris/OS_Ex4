@@ -75,7 +75,7 @@ Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd
 Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 {
 	/* Recv the the request to the server on socket sd */
-	int total_string_size_in_bytes;
+	int total_string_size_in_bytes = 0;
 	Comm_status recv_res;
 	char* str_buffer = NULL;
 
