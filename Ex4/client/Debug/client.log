@@ -1,4 +1,4 @@
 ﻿  main_client.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(118,10): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(298,11): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
-  client.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\client.exe
+C:\Users\Maor\source\repos\OS_Ex4_new\Ex4\client\main_client.c(118,10): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
+C:\Users\Maor\source\repos\OS_Ex4_new\Ex4\client\main_client.c(298,11): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
+  client.vcxproj -> C:\Users\Maor\source\repos\OS_Ex4_new\Ex4\Debug\client.exe
