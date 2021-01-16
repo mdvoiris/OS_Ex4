@@ -6,7 +6,7 @@
 
 #ifndef __SHARED_COMM_H__
 #define __SHARED_COMM_H__
-
+#define MAX_LEN………_RECEIVE 100
 
 #include <stdio.h>
 #include <stdlib.h>

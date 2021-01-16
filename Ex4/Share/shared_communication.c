@@ -123,7 +123,7 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 void split(char str[], int i, char** str_cpy)
 {
 	char* token = NULL;
-	char buffer[35];
+	char buffer[MAX_LEN………_RECEIVE];
 	strcpy(buffer, str);
 	token = strtok(buffer, ":");
 	for (int j = 0; j < i; j++)
