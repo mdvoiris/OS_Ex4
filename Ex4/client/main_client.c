@@ -143,7 +143,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 }
 
 
-Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action)
+Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action)
 {
 	char send_str[USER_ANSWER_LEN];
 	if (closesocket(m_socket) == SOCKET_ERROR)
@@ -155,7 +155,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
-			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\2. Exit", server_address, server_port);
+			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit", server_address, server_port);
 			gets_s(send_str, sizeof(send_str)); //Reading a string from the keyboard
 			if (STRINGS_ARE_EQUAL(send_str, "1"))
 				continue;
@@ -313,7 +313,7 @@ Status main(int argc, char* argv[])
 		//connect block
 		if (client_action == CONNECT)
 		{
-			status = connect_level(client_service, server_port, server_address, &send_server, &client_action);
+			status = connect_level(client_service, server_port, argv[SERVER_ADDRESS], &send_server, &client_action);
 			if (status != SUCCESS)
 				report_error(status);
 			continue;
@@ -324,7 +324,7 @@ Status main(int argc, char* argv[])
 			timeout = TIMEOUT_SEND;
 			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
 				return SET_SOCKET_FAILED;
-			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, server_address);
+			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, argv[SERVER_ADDRESS]);
 			if (status != SUCCESS && status != USER_QUIT)
 				report_error(status);
 			continue;
@@ -347,7 +347,7 @@ Status main(int argc, char* argv[])
 					return SET_SOCKET_FAILED;
 			}
 			char* AcceptedStr = NULL;
-			status = receive_level(&receive_server, &client_action, server_port, server_address);
+			status = receive_level(&receive_server, &client_action, server_port, argv[SERVER_ADDRESS]);
 			if (status != SUCCESS && status != USER_EXIT)
 				report_error(status);
 			continue;
