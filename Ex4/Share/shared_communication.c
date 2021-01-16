@@ -13,7 +13,7 @@ Comm_status send_buffer(const char* buffer, int bytes_to_send, SOCKET sd)
 		bytes_trans_ferred = send(sd, cur_place_ptr, remaining_bytes_to_send, 0);
 		if (bytes_trans_ferred == SOCKET_ERROR)
 		{
-			return COMM_FAILED;
+			return SEND_DISCONNECTED;
 		}
 
 		remaining_bytes_to_send -= bytes_trans_ferred;
@@ -59,10 +59,10 @@ Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd
 	{
 		/* send does not guarantee that the entire message is sent */
 		bytes_just_trans_ferred = recv(sd, cur_place_ptr, remaining_bytes_to_Receive, 0);
-		if (bytes_just_trans_ferred == 0 || WSAGetLastError() == WSAETIMEDOUT)
-			return RECEIVE_DISCONNECTED; // recv() returns zero if connection was gracefully disconnected.
-     	else if (bytes_just_trans_ferred == SOCKET_ERROR)
-			return COMM_FAILED;
+		/*if (bytes_just_trans_ferred == 0 || WSAGetLastError() == WSAETIMEDOUT)
+			return RECEIVE_DISCONNECTED; // recv() returns zero if connection was gracefully disconnected.*/
+     	if (bytes_just_trans_ferred == SOCKET_ERROR)
+			return RECEIVE_DISCONNECTED;
 		remaining_bytes_to_Receive -= bytes_just_trans_ferred;
 		cur_place_ptr += bytes_just_trans_ferred; // <ISP> pointer arithmetic
 	}
@@ -125,6 +125,8 @@ Comm_status split(char* message, COMM_ARGUMENTS comm_argument, char** param)
 	{
 		return MALLOC_FAILED;
 	}
+	if (token[strlen(token) - 1] == '\n')
+		token[strlen(token) - 1] = '\0';
 	strcpy(*param, token);
 	return COMM_SUCCESS;
 }
