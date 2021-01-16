@@ -146,6 +146,7 @@ Status admit_clients() {
     while (true)
     {
         AcceptSocket = accept(MainSocket, NULL, NULL);
+        printf("client accepted\n"); //REMOVE
         if (AcceptSocket == INVALID_SOCKET)
         {
             //if exit called, return success

@@ -24,6 +24,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 
 	//wait for CLIENT_REQUEST
+	printf("waiting for CLIENT_REQUEST\n"); //REMOVE
 	comm_status = receive_string(&recieved, socket);
 	if (comm_status) { 
 		status = FAILED_TO_RECIEVE_STRING;
