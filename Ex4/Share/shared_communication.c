@@ -76,7 +76,7 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 {
 	/* Recv the the request to the server on socket sd */
 	int total_string_size_in_bytes;
-	Comm_status RecvRes;
+	Comm_status recv_res;
 	char* str_buffer = NULL;
 
 	if ((out_put_str_ptr == NULL) || (*out_put_str_ptr != NULL))
@@ -91,24 +91,24 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 	/* The request is received in two parts. First the Length of the string (stored in
 	   an int variable ), then the string itself. */
 
-	RecvRes = ReceiveBuffer(
+	recv_res = receive_buffer(
 		(char*)(&total_string_size_in_bytes),
 		(int)(sizeof(total_string_size_in_bytes)), // 4 bytes
 		sd);
 
-	if (RecvRes != COMM_SUCCESS) return RecvRes;
+	if (recv_res != COMM_SUCCESS) return recv_res;
 
 	str_buffer = (char*)malloc(total_string_size_in_bytes * sizeof(char));
 
 	if (str_buffer == NULL)
 		return MALLOC_FAILED;
 
-	RecvRes = ReceiveBuffer(
+	recv_res = receive_buffer(
 		(char*)(str_buffer),
 		(int)(total_string_size_in_bytes),
 		sd);
 
-	if (RecvRes == COMM_SUCCESS)
+	if (recv_res == COMM_SUCCESS)
 	{
 		*out_put_str_ptr = str_buffer;
 	}
@@ -117,16 +117,16 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 		free(str_buffer);
 	}
 
-	return RecvRes;
+	return recv_res;
 }
 
-void split(char str[], int i, char** str_cpy)
+void split(char str[], COMM_ARGUMENTS param_mess, char** str_cpy)
 {
 	char* token = NULL;
 	char buffer[MAX_LEN………_RECEIVE];
 	strcpy(buffer, str);
 	token = strtok(buffer, ":");
-	for (int j = 0; j < i; j++)
+	for (int j = 0; j < param_mess; j++)
 		token = strtok(NULL, ";");
 	*str_cpy = token;
 }

@@ -1,16 +1,2 @@
-﻿  main_client.c
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(10,27): warning C4013: 'receive_string' undefined; assuming extern returning int
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(120,16): warning C4553: '==': result of expression not used; did you intend '='?
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(140,27): warning C4047: '=': 'CLIENT_ACTION *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(156,92): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(156,31): warning C4024: 'send_string': different types for formal and actual parameter 1
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(163,98): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(163,31): warning C4024: 'send_string': different types for formal and actual parameter 1
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(271,62): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(271,50): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(281,71): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(281,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(283,72): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(283,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(285,42): error C2440: 'function': cannot convert from 'RECEIVE_SERVER *' to 'RECEIVE_SERVER'
-C:\Users\Maor\source\repos\OS_Ex4\Ex4\client\main_client.c(285,27): warning C4024: 'receive_level': different types for formal and actual parameter 1
+﻿  shared_communication.c
+  client.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\client.exe

@@ -3,7 +3,6 @@
 #ifndef __MAIN_CLIENT_H__
 #define __MAIN_CLIENT_H__
 
-#define BRUTAL_TERMINATION_CODE 0x55
 #define STRINGS_ARE_EQUAL( Str1, Str2 ) ( strcmp( (Str1), (Str2) ) == 0 )
 #define TIMEOUT_SEND 30000 
 #define TIMEOUT_RECEIVE_SHORT 15000
@@ -63,9 +62,9 @@ int time_out;
 //Prints errors according to the recieved status
 Status main(int argc, char* argv[]);
 void report_error(Status status);
-Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address);
+Status send_level(char* player_name, SEND_SERVER send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address);
 Status connect_level(SOCKADDR_IN client_service, int server_port, long server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action);
-Status receive_level(RECEIVE_SERVER receive_serve, CLIENT_ACTION* client_action, int server_port, long server_address);
+Status receive_level(RECEIVE_SERVER* receive_serve, CLIENT_ACTION* client_action, int server_port, long server_address);
 //Status send_string(const char* Str, SOCKET sd);
 //Status SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd);
 

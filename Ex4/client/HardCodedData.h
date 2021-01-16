@@ -5,7 +5,7 @@
 
 //Defines:
 #define MAX_LEN………_SEND 25
-#define MAX_LEN………_RECEIVE 100
+#define MAX_LEN………_RECEIVE 55
 #define SERVER_PORT_LENGTH 4
 #define MAX_PLAYER_NAME 20
 

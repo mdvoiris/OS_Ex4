@@ -27,6 +27,13 @@ typedef enum _comm_status {
 	MALLOC_FAILED
 }Comm_status;
 
+typedef enum _comm_arguments {
+	MASSAGE_TYPE,
+	PARAM_1,
+	PARAM_2,
+	PARAM_3,
+	PARAM_4
+} COMM_ARGUMENTS;
 
 //Function handles:
 Comm_status send_buffer(const char* buffer, int bytes_to_send, SOCKET sd);
@@ -37,6 +44,6 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd);
 
 Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd);
 
-void split(char str[], int i, char** str_cpy);
+void split(char str[], COMM_ARGUMENTS i, char** str_cpy);
 
 #endif

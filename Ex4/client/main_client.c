@@ -2,21 +2,25 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "main_client.h"
-Status receive_level(RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
-	char* AcceptedStr = NULL;
+	char* accepted_str = NULL;
+	char* str_cpy = NULL;
+	char buffer[MAX_LEN………_RECEIVE];
 	Comm_status recv_res;
 	char send_str[MAX_LEN………_RECEIVE];
-	recv_res = receive_string(&AcceptedStr, m_socket);
+	recv_res = receive_string(&accepted_str, m_socket);
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
 	if (recv_res == COMM_FAILED)
 	{
 		return FAILED_RECEIVE;
+		free(accepted_str);
 	}
 	else if (recv_res == RECEIVE_DISCONNECTED)
 	{
-		printf("Failed connecting to server on <ip>:<port>.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+		free(accepted_str);
+		printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
 		if (!strcmp(send_str, "2"))
 		{
@@ -29,12 +33,88 @@ Status receive_level(RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action
 		}
 
 	}
-	else
+	split(accepted_str, MASSAGE_TYPE, &str_cpy);
+	if (!strcmp(str_cpy,"SERVER_GAME_RESULTS"))
 	{
-		printf("%s\n", AcceptedStr);
+		split(accepted_str, PARAM_1, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("Bulls: %s\n", buffer);
+		split(accepted_str, PARAM_2, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("Cows: %s\n", buffer);
+		split(accepted_str, PARAM_3, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("%s played:", buffer);
+		split(accepted_str, PARAM_4, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("%s\n", buffer);
+		free(accepted_str);
+		return SUCCESS;
 	}
-
-	free(AcceptedStr);
+	else if ((!strcmp(str_cpy, "SERVER_WIN")))
+	{
+		split(accepted_str, PARAM_1, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("%s won!\n", buffer);
+		split(accepted_str, PARAM_2, &str_cpy);
+		strcpy(buffer, str_cpy);
+		printf("opponents number was %s\n", buffer);
+		free(accepted_str);
+		return SUCCESS;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_DRAW")))
+	{
+		printf("Itís a tie\n");
+		free(accepted_str);
+		return SUCCESS;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_OPPONENT_QUIT")))
+	{
+		printf("Opponent quit.\n");
+		free(accepted_str);
+		return SUCCESS;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_MAIN_MENU")))
+	{
+		*client_action = SEND;
+		*receive_server = SERVER_MAIN_MENU;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_INVITE")))
+	{
+		printf("Game is on!\n");
+		*client_action = RECEIVE;
+		return SUCCESS;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_DINIED")))
+	{
+		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+		gets_s(send_str, sizeof(send_str));
+		if (!strcmp(send_str, "2"))
+		{
+			return USER_EXIT;
+		}
+		else
+		{
+			*client_action = CONNECT;
+		}
+	}
+	else if ((!strcmp(str_cpy, "SERVER_NO_OPPONENTS")))
+	{
+		*client_action = SEND;
+		*receive_server = SERVER_MAIN_MENU;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_SETUP_REQUEST")))
+	{
+		*client_action = SEND;
+		*receive_server = SERVER_SETUP_REQUEST;
+	}
+	else if ((!strcmp(str_cpy, "SERVER_PLAYER_MOVE_REQUEST")))
+	{
+		*client_action = SEND;
+		*receive_server = SERVER_PLAYER_MOVE_REQUEST;
+	}
+	free(accepted_str);
+	return SUCCESS;
 }
 
 
@@ -64,10 +144,10 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, long server_ad
 }
 
 
-Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status send_level(char* player_name, SEND_SERVER send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
 {
 	char send_str[MAX_LEN………_SEND];
-	if (*send_server == CLIENT_REQUEST)
+	if (send_server == CLIENT_REQUEST)
 	{
 		*client_action = RECEIVE;
 		return send_string(player_name, m_socket);
@@ -82,29 +162,7 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 			send_string("CLIENT……_DISCONNECT\n", m_socket);
 			return USER_QUIT;
 		}
-		*send_server == CLIENT_VERSUS;
 		return send_string("CLIENT……_VERSUS\n", m_socket);
-	}
-	if (receive_server == SERVER_INVITE)// moove to receive block
-	{
-		printf("Game is on!\n");
-		*client_action = RECEIVE;
-		return SUCCESS;
-	}
-	if (receive_server == SERVER_DENIED)
-	{
-		closesocket(m_socket);
-		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
-		gets_s(send_str, sizeof(send_str));
-		if (!strcmp(send_str,"2"))
-		{
-			return USER_EXIT;
-		}
-		else
-		{
-			client_action = CONNECT;
-			return SUCCESS;
-		}
 	}
 	if (receive_server == SERVER_SETUP_REQUEST)
 	{
@@ -133,12 +191,6 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 
 
 
-
-
-
-
-
-
 Status main(int argc, char* argv[])
 {
 	char player_name[20];
@@ -147,10 +199,9 @@ Status main(int argc, char* argv[])
 	SOCKADDR_IN client_service;
 	SEND_SERVER send_server = CLIENT_REQUEST;
 	int iResult;
-	DWORD event_result;
 	int server_port;
 	long server_address;
-	RECEIVE_SERVER receive_server;
+	RECEIVE_SERVER receive_server = INVALID_STATUS_CODE;
 	char send_str[1];
 	WSADATA wsaData; //Create a WSADATA object called wsaData.
 //The WSADATA structure contains information about the Windows Sockets implementation.
@@ -234,7 +285,7 @@ Status main(int argc, char* argv[])
 		if (client_action == SEND)
 		{
 			setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, TIMEOUT_SEND, sizeof(int));
-			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, server_address);
+			status = send_level(player_name, send_server, receive_server, &client_action, server_port, server_address);
 			if (status != SUCCESS)
 				report_error(status);
 			continue;
