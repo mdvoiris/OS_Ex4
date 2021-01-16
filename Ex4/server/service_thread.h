@@ -24,11 +24,13 @@ typedef enum _stage {
 
 typedef struct _player {
 	char* name;
-	char numbers[5]; //4 +'\0'
+	char numbers[NUM_OF_DIGITS + 1];
+	char guess[NUM_OF_DIGITS + 1];
 }Player;
 
 //Global veriables:
 const char file_name[] = "GameSession.txt";
+long int cur_file_pos = 0;
 Player client = { 0 };
 Player opponent = { 0 };
 
@@ -38,7 +40,9 @@ DWORD WINAPI service_thread(SOCKET* socket);
 
 Status send_to_client(SOCKET socket, Stage stage, char* message);
 
-Status get_move_results(char** move_results, char* client_guess);
+Status share_guesses();
+
+Status calculate_move_results(char** move_results, int buffer_size);
 
 Status look_for_opponent();
 

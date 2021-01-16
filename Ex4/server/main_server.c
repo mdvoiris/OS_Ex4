@@ -114,9 +114,15 @@ Status admit_clients() {
     status = start_exit_thread();
     if (status) return status;
 
-    //Create opponent event to signal opponent joined
+    //Create opponent event to signal opponent moves
     opponent_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_event"));
     if (opponent_event == NULL) {
+        return FAILED_TO_CREATE_EVENT;
+    }
+
+    //Create opponent disconnect event to signal unexpected oppnent disconnect
+    opponent_disconnect_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_disconnect_event"));
+    if (opponent_disconnect_event == NULL) {
         return FAILED_TO_CREATE_EVENT;
     }
 
