@@ -91,7 +91,7 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 	/* The request is received in two parts. First the Length of the string (stored in
 	   an int variable ), then the string itself. */
 
-	RecvRes = ReceiveBuffer(
+	RecvRes = receive_buffer(
 		(char*)(&total_string_size_in_bytes),
 		(int)(sizeof(total_string_size_in_bytes)), // 4 bytes
 		sd);
@@ -103,7 +103,7 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 	if (str_buffer == NULL)
 		return MALLOC_FAILED;
 
-	RecvRes = ReceiveBuffer(
+	RecvRes = receive_buffer(
 		(char*)(str_buffer),
 		(int)(total_string_size_in_bytes),
 		sd);
