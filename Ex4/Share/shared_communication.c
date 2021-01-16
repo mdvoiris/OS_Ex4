@@ -134,4 +134,5 @@ Comm_status split(char* str, int i, char** str_cpy)
 		return MALLOC_FAILED;
 	}
 	strcpy(*str_cpy, token);
+	return COMM_SUCCESS;
 }

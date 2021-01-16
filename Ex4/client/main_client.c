@@ -33,17 +33,17 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		}
 
 	}
-	split(accepted_str, MASSAGE_TYPE, &str_cpy);
+	if(split(accepted_str, MASSAGE_TYPE, &str_cpy);
 	if (!strcmp(str_cpy,"SERVER_GAME_RESULTS"))
 	{
-		if(split(accepted_str, PARAM_1, &str_cpy)!= MALLOC_FAILED);
+		if(split(accepted_str, PARAM_1, &str_cpy)!= MALLOC_FAILED));
 		    printf("Bulls: %s\n", buffer);
 		if(split(accepted_str, PARAM_2, &str_cpy));
 		   printf("Cows: %s\n", buffer);
-		if(split(accepted_str, PARAM_3, &str_cpy));
-		printf("%s played:", buffer);
-		split(accepted_str, PARAM_4, &str_cpy);
-		printf("%s\n", buffer);
+		if(split(accepted_str, PARAM_3, &str_cpy))
+		   printf("%s played:", buffer);
+		if(split(accepted_str, PARAM_4, &str_cpy))
+		   printf("%s\n", buffer);
 		free(accepted_str);
 		return SUCCESS;
 	}
