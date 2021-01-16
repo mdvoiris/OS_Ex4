@@ -49,17 +49,21 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		}
 
 		//wait for client choice
+		printf("waiting for client choise\n");
 		comm_status = receive_string(&recieved, socket);
+		printf("finished waiting for client choise, recieved \t %s\n", recieved);
 		if (comm_status) {
 			status = FAILED_TO_RECIEVE_STRING;
 			goto EXIT;
 		}
 
 		//if client chose CLIENT_VERSUS
-		if (recieved == "CLIENT_VERSUS\n") {
+		if (strcmp(recieved,"CLIENT_VERSUS\n") == 0) {
 
 			//search for an already connected opponent or wait for one
+			printf("looking for opponent\n");
 			status = look_for_opponent(file_mutex, opponent_event);
+			printf("finished looking for opponent\n");
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -75,12 +79,13 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 			//if can't find another opponent
 			if (opponent.name == NULL) {
+				printf("can't find opponent\n");
 				//send SERVER_NO_OPPONENTS
 				status = send_to_client(socket, NO_OPPONENT, NULL);
 				//back to main menu
 				continue;
 			}
-
+			printf("found opponent\n");
 			//send SERVER_INVITE and SERVER_SETUP_REUEST
 			status = send_to_client(socket, SETUP, opponent.name);
 			if (status) {

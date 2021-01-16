@@ -145,6 +145,7 @@ Status admit_clients() {
     //Client admitting loop
     while (true)
     {
+        printf("waiting for accept\n"); //REMOVE
         AcceptSocket = accept(MainSocket, NULL, NULL);
         printf("client accepted\n"); //REMOVE
         if (AcceptSocket == INVALID_SOCKET)
@@ -173,14 +174,18 @@ Status admit_clients() {
         //if not first
         else if (client_thread_h[0] != NULL) {
             //if second
+            printf("second client\n"); //REMOVE
             if (client_thread_h[1] == NULL) {
                 index = 1;
-                break;
             }
-            //after that
-            //if thread 0 finished index = 0; else index = 1
-            index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : 1;
+            else {
+                printf("more clients\n"); //REMOVE
+                //after that
+                //if thread 0 finished index = 0; else index = 1
+                index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : 1;
+            }
         }
+        printf("first client\n"); //REMOVE
 
         sockets_h[index] = AcceptSocket;
         client_args.socket = AcceptSocket;

@@ -2,14 +2,17 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "main_client.h"
-Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_action, int server_port, char *server_address)
 {
 	char* accepted_str = NULL;
 	char* param = NULL;
 	char buffer[MAX_LEN………_RECEIVE];
 	Comm_status recv_res;
 	char send_str[USER_ANSWER_LEN];
+
+	printf("waiting for server approved\n"); //REMOVE
 	recv_res = receive_string(&accepted_str, m_socket);
+	printf("recieved string:\t %s\n", accepted_str); //REMOVE
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
 	if (recv_res == COMM_FAILED)
@@ -20,9 +23,9 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	else if (recv_res == RECEIVE_DISCONNECTED)
 	{
 		free(accepted_str);
-		printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+		printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
-		if (!strcmp(send_str, "2"))
+		if (strcmp(send_str, "2") == 0)
 		{
 			return USER_EXIT;
 		}
@@ -35,7 +38,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	}
 	if (split(accepted_str, MASSAGE_TYPE, &param) == MALLOC_FAILED)
 		return ALLOCTION_FAILED;
-	if (!strcmp(param,"SERVER_GAME_RESULTS"))
+	if (strcmp(param,"SERVER_GAME_RESULTS") == 0)
 	{
 		if(split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
 		    printf("Bulls: %s\n", buffer);
@@ -68,7 +71,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(param, "SERVER_WIN")))
+	else if ((strcmp(param, "SERVER_WIN")) == 0)
 	{
 		if (split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
 		   printf("%s won!\n", buffer);
@@ -87,34 +90,34 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(param, "SERVER_DRAW")))
+	else if ((strcmp(param, "SERVER_DRAW\n")) == 0)
 	{
 		printf("Itís a tie\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(param, "SERVER_OPPONENT_QUIT")))
+	else if ((0 == strcmp(param, "SERVER_OPPONENT_QUIT\n")))
 	{
 		printf("Opponent quit.\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((!strcmp(param, "SERVER_MAIN_MENU")))
+	else if ((0 == strcmp(param, "SERVER_MAIN_MENU\n")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_MAIN_MENU;
 	}
-	else if ((!strcmp(param, "SERVER_INVITE")))
+	else if ((0 == strcmp(param, "SERVER_INVITE\n")))
 	{
 		printf("Game is on!\n");
 		*client_action = RECEIVE;
 		return SUCCESS;
 	}
-	else if ((!strcmp(param, "SERVER_DINIED")))
+	else if ((0 == strcmp(param, "SERVER_DENIED\n")))
 	{
 		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
-		if (!strcmp(send_str, "2"))
+		if (0 == strcmp(send_str, "2"))
 		{
 			return USER_EXIT;
 		}
@@ -123,17 +126,12 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 			*client_action = CONNECT;
 		}
 	}
-	else if ((!strcmp(param, "SERVER_NO_OPPONENTS")))
-	{
-		*client_action = SEND;
-		*receive_server = SERVER_MAIN_MENU;
-	}
-	else if ((!strcmp(param, "SERVER_SETUP_REQUEST")))
+	else if ((0 == strcmp(param, "SERVER_SETUP_REQUEST\n")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_SETUP_REQUEST;
 	}
-	else if ((!strcmp(param, "SERVER_PLAYER_MOVE_REQUEST")))
+	else if ((0 == strcmp(param, "SERVER_PLAYER_MOVE_REQUEST\n")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_PLAYER_MOVE_REQUEST;
@@ -155,7 +153,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_a
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
-			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit", server_address, server_port);
+			printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit", server_address, server_port);
 			gets_s(send_str, sizeof(send_str)); //Reading a string from the keyboard
 			if (STRINGS_ARE_EQUAL(send_str, "1"))
 				continue;
@@ -173,11 +171,12 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_a
 }
 
 
-Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, long server_address)
+Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, char *server_address)
 {
 	char send_str[MAX_LEN………_SEND];
 	if (*send_server == CLIENT_REQUEST)
 	{
+		printf("sending client request\n"); //REMOVE
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_REQUEST:%s\n", player_name);
 		*send_server = CLIENT_INVALID;
@@ -188,12 +187,12 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		printf("Choose what to do next:\n1. Play against another client\n2. Quit\n");
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
-		if (!strcmp(send_str, "2"))
+		if (strcmp(send_str, "2") == 0)
 		{
-			send_string("CLIENT……_DISCONNECT\n", m_socket);
+			send_string("CLIENT_DISCONNECT\n", m_socket);
 			return USER_QUIT;
 		}
-		return send_string("CLIENT……_VERSUS\n", m_socket);
+		return send_string("CLIENT_VERSUS\n", m_socket);
 	}
 	if (receive_server == SERVER_SETUP_REQUEST)
 	{
@@ -288,14 +287,15 @@ Status main(int argc, char* argv[])
 	}
 
 	client_service.sin_family = AF_INET;
-	client_service.sin_addr.s_addr = server_port; //Setting the IP address to connect to
+	client_service.sin_addr.s_addr = server_address; //Setting the IP address to connect to
 	client_service.sin_port = htons(server_port); //Setting the port to connect to.
 
 	while (1)
 	{
+		printf("trying to connect\n"); //REMOVE
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
-			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\2. Exit", server_address, server_port);
+			printf("Failed connecting to server on %ld:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", argv[SERVER_ADDRESS], server_port);
 			gets_s(send_str, sizeof(send_str)); //Reading a string from the keyboard
 			if (STRINGS_ARE_EQUAL(send_str, "1"))
 				continue;
@@ -321,6 +321,7 @@ Status main(int argc, char* argv[])
 		//send block
 		if (client_action == SEND)
 		{
+			printf("eneterd send\n"); //REMOVE
 			timeout = TIMEOUT_SEND;
 			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
 				return SET_SOCKET_FAILED;

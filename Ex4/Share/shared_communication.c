@@ -79,15 +79,6 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 	Comm_status recv_res;
 	char* str_buffer = NULL;
 
-	if ((out_put_str_ptr == NULL) || (*out_put_str_ptr != NULL))
-	{
-		printf("The first input to ReceiveString() must be "
-			"a pointer to a char pointer that is initialized to NULL. For example:\n"
-			"\tchar* Buffer = NULL;\n"
-			"\tReceiveString( &Buffer, ___ )\n");
-		return INVALID_COMM_STATUS;
-	}
-
 	/* The request is received in two parts. First the Length of the string (stored in
 	   an int variable ), then the string itself. */
 
