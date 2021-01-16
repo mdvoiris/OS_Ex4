@@ -211,10 +211,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		*client_action = RECEIVE;
 		if (strcmp(send_str, "2") == 0)
 		{
-			send_string("CLIENT_DISCONNECT\n", m_socket);
+			send_res = send_string("CLIENT_DISCONNECT\n", m_socket);
 			return USER_QUIT;
 		}
-		send_res = send_string(send_str, m_socket);
+		send_res = send_string("CLIENT_VERSUS\n", m_socket);
 		if (send_res == SEND_DISCONNECTED)
 			return ask_to_reconnect(&client_action, server_port, server_address);
 		return send_res;
