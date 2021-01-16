@@ -108,30 +108,30 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((strcmp(param, "SERVER_DRAW\n")) == 0)
+	else if ((strcmp(param, "SERVER_DRAW")) == 0)
 	{
 		printf("It’s a tie\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_OPPONENT_QUIT\n")))
+	else if ((0 == strcmp(param, "SERVER_OPPONENT_QUIT")))
 	{
 		printf("Opponent quit.\n");
 		free(accepted_str);
 		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_MAIN_MENU\n")))
+	else if ((0 == strcmp(param, "SERVER_MAIN_MENU")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_MAIN_MENU;
 	}
-	else if ((0 == strcmp(param, "SERVER_INVITE\n")))
+	else if ((0 == strcmp(param, "SERVER_INVITE")))
 	{
 		printf("Game is on!\n");
 		*client_action = RECEIVE;
 		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_DENIED\n")))
+	else if ((0 == strcmp(param, "SERVER_DENIED")))
 	{
 		printf("Server on %s:%d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
@@ -144,12 +144,12 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 			*client_action = CONNECT;
 		}
 	}
-	else if ((0 == strcmp(param, "SERVER_SETUP_REQUEST\n")))
+	else if ((0 == strcmp(param, "SERVER_SETUP_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_SETUP_REQUEST;
 	}
-	else if ((0 == strcmp(param, "SERVER_PLAYER_MOVE_REQUEST\n")))
+	else if ((0 == strcmp(param, "SERVER_PLAYER_MOVE_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_PLAYER_MOVE_REQUEST;
