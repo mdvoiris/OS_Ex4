@@ -13,23 +13,18 @@
 //Defines:
 #define NUM_OF_ARGS 2
 #define NUM_OF_SLOTS 2
-#define NUM_OF_DIGITS 4
 
 
-//Global variebles:
-HANDLE exit_thread_h = NULL;
-HANDLE client_thread_h[NUM_OF_SLOTS] = { NULL };
-SOCKET MainSocket = INVALID_SOCKET;
-SOCKET sockets_h[NUM_OF_SLOTS] = { INVALID_SOCKET, INVALID_SOCKET };
-int server_port = 0;
-HANDLE exit_event = NULL;
-HANDLE file_mutex = NULL;
-HANDLE opponent_event = NULL;
-HANDLE opponent_disconnect_event = NULL;
+//Typedefs:
+typedef struct _client_args {
+	SOCKET socket;
+	HANDLE file_mutex;
+	HANDLE opponent_event;
+	HANDLE opponent_disconnect_event;
+}Client_args;
 
 
 //Function Handles:
-
 Status start_socket();
 
 Status start_exit_thread();
@@ -40,7 +35,7 @@ Status admit_clients();
 
 Status dismiss_client(AcceptSocket);
 
-void clients_cleanup();
+void clients_cleanup(Client_args client_args);
 
 //Prints errors according to the recieved status
 void report_error(Status status, bool terminate);

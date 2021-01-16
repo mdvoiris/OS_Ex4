@@ -2,6 +2,15 @@
 #include "main_server.h"
 
 
+//Global veriables:
+HANDLE exit_thread_h = NULL;
+HANDLE client_thread_h[NUM_OF_SLOTS] = { NULL };
+SOCKET MainSocket = INVALID_SOCKET;
+SOCKET sockets_h[NUM_OF_SLOTS] = { INVALID_SOCKET, INVALID_SOCKET };
+int server_port = 0;
+HANDLE exit_event = NULL;
+
+
 Status main(int argc, char* argv[]) 
 {
 	Status status = INVALID_STATUS_CODE;
@@ -102,6 +111,7 @@ Status admit_clients() {
     SOCKET AcceptSocket = INVALID_SOCKET;
     int client_count = 0;
     int index = 0;
+    Client_args client_args = { 0 };
 
 
     //Create exit event to signal threads to exit
@@ -115,20 +125,20 @@ Status admit_clients() {
     if (status) return status;
 
     //Create opponent event to signal opponent moves
-    opponent_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_event"));
-    if (opponent_event == NULL) {
+    client_args.opponent_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_event"));
+    if (client_args.opponent_event == NULL) {
         return FAILED_TO_CREATE_EVENT;
     }
 
     //Create opponent disconnect event to signal unexpected oppnent disconnect
-    opponent_disconnect_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_disconnect_event"));
-    if (opponent_disconnect_event == NULL) {
+    client_args.opponent_disconnect_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_disconnect_event"));
+    if (client_args.opponent_disconnect_event == NULL) {
         return FAILED_TO_CREATE_EVENT;
     }
 
     //Create file mutex for accessing in game session
-    file_mutex = CreateMutex(NULL, FALSE, NULL);
-    if (file_mutex == NULL) {
+    client_args.file_mutex = CreateMutex(NULL, FALSE, NULL);
+    if (client_args.file_mutex == NULL) {
         return FAILED_TO_CREATE_MUTEX;
     }
 
@@ -140,12 +150,12 @@ Status admit_clients() {
         {
             //if exit called' return success
             if (WaitForSingleObject(exit_event, 0) == WAIT_OBJECT_0) {
-                clients_cleanup();
+                clients_cleanup(client_args);
                 return SUCCESS;
             }
             //otherwise unexpeced error
             else {
-                clients_cleanup();
+                clients_cleanup(client_args);
                 return FAILED_TO_ACCEPT_SOCKET;
             }
         }
@@ -153,7 +163,7 @@ Status admit_clients() {
         if (client_count >= NUM_OF_SLOTS) {
             status = dismiss_client(AcceptSocket);
             if (status) {
-                clients_cleanup();
+                clients_cleanup(client_args);
                 return status;
             }
         }
@@ -161,17 +171,18 @@ Status admit_clients() {
         index = (client_thread_h[0] == NULL) ? 0 : 1;
 
         sockets_h[index] = AcceptSocket;
+        client_args.socket = AcceptSocket;
 
         client_thread_h[index] = CreateThread(
             NULL,                   // default security attributes
             0,                      // use default stack size  
             service_thread,         // thread function name
-            &(sockets_h[index]),    // argument to thread function 
+            &(client_args),    // argument to thread function 
             0,                      // use default creation flags 
             NULL);
 
         if (client_thread_h[index] == NULL){
-            clients_cleanup();
+            clients_cleanup(client_args);
             return FAILED_TO_CREATE_THREAD;
         }
 
@@ -231,7 +242,7 @@ Status dismiss_client(AcceptSocket) {
 }
 
 
-void clients_cleanup() {
+void clients_cleanup(Client_args client_args) {
     Status status = INVALID_STATUS_CODE;
     DWORD return_value = 0;
     int num_of_threads = 0;
@@ -273,8 +284,9 @@ void clients_cleanup() {
         }
     }
 
-    CloseHandle(file_mutex);
-    CloseHandle(opponent_event);
+    CloseHandle(client_args.file_mutex);
+    CloseHandle(client_args.opponent_event);
+    CloseHandle(client_args.opponent_disconnect_event);
     CloseHandle(exit_event);
 }
 
