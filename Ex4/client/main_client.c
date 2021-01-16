@@ -2,6 +2,24 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "main_client.h"
+
+Status ask_to_reconnect(CLIENT_ACTION** client_action,int server_port, char* server_address)
+{
+	char send_str[2];
+	printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+	gets_s(send_str, sizeof(send_str));
+	if (strcmp(send_str, "2") == 0)
+	{
+		return USER_EXIT;
+	}
+	else
+	{
+		**client_action = CONNECT;
+		return SUCCESS;
+	}
+
+}
+
 Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_action, int server_port, char *server_address)
 {
 	char* accepted_str = NULL;
@@ -15,12 +33,12 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	printf("recieved string:\t %s\n", accepted_str); //REMOVE
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
-	if (recv_res == COMM_FAILED)
+	/*if (recv_res == COMM_FAILED)
 	{
 		return FAILED_RECEIVE;
 		free(accepted_str);
-	}
-	else if (recv_res == RECEIVE_DISCONNECTED)
+	}*/
+	if (recv_res == RECEIVE_DISCONNECTED)
 	{
 		free(accepted_str);
 		printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
@@ -173,6 +191,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_a
 
 Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, char *server_address)
 {
+	Comm_status send_res;
 	char send_str[MAX_LEN………_SEND];
 	if (*send_server == CLIENT_REQUEST)
 	{
@@ -180,7 +199,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_REQUEST:%s\n", player_name);
 		*send_server = CLIENT_INVALID;
-		return send_string(send_str, m_socket);
+		send_res = send_string(send_str, m_socket);
+		if (send_res == SEND_DISCONNECTED)
+			return ask_to_reconnect(&client_action, server_port, server_address);
+		return send_res;
 	}
 	if (receive_server == SERVER_MAIN_MENU)
 	{
@@ -192,7 +214,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 			send_string("CLIENT_DISCONNECT\n", m_socket);
 			return USER_QUIT;
 		}
-		return send_string("CLIENT_VERSUS\n", m_socket);
+		send_res = send_string(send_str, m_socket);
+		if (send_res == SEND_DISCONNECTED)
+			return ask_to_reconnect(&client_action, server_port, server_address);
+		return send_res;
 	}
 	if (receive_server == SERVER_SETUP_REQUEST)
 	{
@@ -200,7 +225,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
-		return send_string(send_str, m_socket);
+		send_res = send_string(send_str, m_socket);
+		if (send_res == SEND_DISCONNECTED)
+			return ask_to_reconnect(&client_action, server_port, server_address);
+		return send_res;
 	}
 	if (receive_server == SERVER_SETUP_REQUEST)
 	{
@@ -208,7 +236,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
-		return send_string(send_str, m_socket);
+		send_res = send_string(send_str, m_socket);
+		if (send_res == SEND_DISCONNECTED)
+			return ask_to_reconnect(&client_action, server_port, server_address);
+		return send_res;
 	}
 	if (receive_server == SERVER_PLAYER_MOVE_REQUEST)
 	{
@@ -216,7 +247,10 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", send_str);
-		return send_string(send_str, m_socket);
+		send_res = send_string(send_str, m_socket);
+		if (send_res == SEND_DISCONNECTED)
+			return ask_to_reconnect(&client_action, server_port, server_address);
+		return send_res;
 	}
 	return SUCCESS;
 }

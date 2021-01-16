@@ -1,3 +1,6 @@
-﻿  main_client.c
-C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(118,10): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
-  client.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\client.exe
+﻿  shared_communication.c
+  main_client.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(9,121): error C2065: 'server_address': undeclared identifier
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(9,134): error C2065: 'server_port': undeclared identifier
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(9,9): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(136,10): warning C4477: 'printf' : format string '%ld' requires an argument of type 'long', but variadic argument 1 has type 'char *'
