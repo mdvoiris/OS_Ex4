@@ -7,6 +7,7 @@
 //Includes:
 #include "shared_communication.h"
 #include "HardCodedData.h"
+#include "main_server.h"
 
 
 //Typedefs:
@@ -25,12 +26,10 @@ typedef enum _stage {
 //Function Handles:
 DWORD WINAPI service_thread(SOCKET* socket);
 
-Status send_to_client(Stage stage, char* message);
+Status send_to_client(SOCKET socket, Stage stage, char* message);
 
-Status get_from_client(Stage stage, char** message);
+Status get_move_results(const char file_name[], char** move_results, char* client_guess);
 
-Status get_move_results(char** move_results);
-
-Status look_for_opponent(char** opponent_name);
+Status look_for_opponent(const char file_name[], char* client_name, char* client_numbers, char** opponent_name, char* opponent_numbers);
 
 #endif

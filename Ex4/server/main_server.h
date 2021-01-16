@@ -23,7 +23,8 @@ SOCKET MainSocket = INVALID_SOCKET;
 SOCKET sockets_h[NUM_OF_SLOTS] = { INVALID_SOCKET, INVALID_SOCKET };
 int server_port = 0;
 HANDLE exit_event = NULL;
-
+HANDLE file_mutex = NULL;
+HANDLE opponent_event = NULL;
 
 
 //Function Handles:

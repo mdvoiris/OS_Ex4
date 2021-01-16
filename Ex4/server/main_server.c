@@ -114,6 +114,18 @@ Status admit_clients() {
     status = start_exit_thread();
     if (status) return status;
 
+    //Create opponent event to signal opponent joined
+    opponent_event = CreateEvent(NULL, TRUE, FALSE, TEXT("opponent_event"));
+    if (opponent_event == NULL) {
+        return FAILED_TO_CREATE_EVENT;
+    }
+
+    //Create file mutex for accessing in game session
+    file_mutex = CreateMutex(NULL, FALSE, NULL);
+    if (file_mutex == NULL) {
+        return FAILED_TO_CREATE_MUTEX;
+    }
+
     //Client admitting loop
     while (true)
     {
@@ -255,6 +267,8 @@ void clients_cleanup() {
         }
     }
 
+    CloseHandle(file_mutex);
+    CloseHandle(opponent_event);
     CloseHandle(exit_event);
 }
 
@@ -273,10 +287,15 @@ void report_error(Status status, bool terminate) {
     case FAILED_TO_CLOSE_SOCKET:        printf("Error - Failed to close socket with %ld", WSAGetLastError()); break;
     case FAILED_TO_ACCEPT_SOCKET:       printf("Error - Failed to accept socket with %ld", WSAGetLastError()); break;
     case FAILED_TO_CREATE_EVENT:        printf("Error - Failed to create event with %ld", WSAGetLastError()); break;
+    case FAILED_TO_SEND_STRING:         printf("Error - Failed to send string with %ld", WSAGetLastError()); break;
+    case FAILED_TO_RECIEVE_STRING:      printf("Error - Failed to recieve string with %ld", WSAGetLastError()); break;
     case FAILED_TO_WAIT:                printf("Error - Failed at a wait function with %d", GetLastError()); break;
     case QUEUE_USER_APC_FAILED:         printf("Error - Failed at QueueUserAPC with %d", GetLastError()); break;
-    case FOPEN_FAIL:                    printf("Error - Failed Opening the input file"); break;
-    //case ALLOC_FAILED:                  printf("Error - Allocation failed"); break;
+    case FAILED_TO_CREATE_MUTEX:        printf("Error - Failed at CreateMutex with %d", GetLastError()); break;
+    case UNRELEASED_MUTEX:              printf("Error - Didn't manage to get mutex with %d", GetLastError()); break;
+    case FOPEN_FAIL:                    printf("Error - Failed opening a file"); break;
+    case FAILED_TO_REMOVE_FILE:         printf("Error - Failed to remove file"); break;
+    case ALLOC_FAILED:                  printf("Error - Allocation failed"); break;
     case FAILED_TO_CREATE_THREAD:       printf("Error - Failed at CreateThread()"); break;
     }
 
