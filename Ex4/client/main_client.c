@@ -133,7 +133,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	}
 	else if ((0 == strcmp(param, "SERVER_DENIED\n")))
 	{
-		printf("Server on %ld : %d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
+		printf("Server on %s:%d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
 		if (0 == strcmp(send_str, "2"))
 		{
