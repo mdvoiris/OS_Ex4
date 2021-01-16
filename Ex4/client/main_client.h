@@ -61,7 +61,6 @@ int time_out;
 
 //Function Handles:
 //Prints errors according to the recieved status
-Status main(int argc, char* argv[]);
 void report_error(Status status);
 Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER receive_server, CLIENT_ACTION* client_action, int server_port, char* server_address);
 Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action);
