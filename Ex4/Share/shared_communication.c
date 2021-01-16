@@ -120,13 +120,18 @@ Comm_status receive_string(char** out_put_str_ptr, SOCKET sd)
 	return recv_res;
 }
 
-void split(char str[], COMM_ARGUMENTS param_mess, char** str_cpy)
+Comm_status split(char* str, int i, char** str_cpy)
 {
 	char* token = NULL;
-	char buffer[MAX_LEN���_RECEIVE];
+	char buffer[MAX_LENֹֹֹ_RECEIVE];
 	strcpy(buffer, str);
 	token = strtok(buffer, ":");
-	for (int j = 0; j < param_mess; j++)
+	for (int j = 0; j < i; j++)
 		token = strtok(NULL, ";");
-	*str_cpy = token;
+	*str_cpy = (char*)malloc(sizeof(char) * (strlen(token) + 1));
+	if (*str_cpy == NULL)
+	{
+		return MALLOC_FAILED;
+	}
+	strcpy(*str_cpy, token);
 }

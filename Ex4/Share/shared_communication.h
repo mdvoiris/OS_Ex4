@@ -6,7 +6,8 @@
 
 #ifndef __SHARED_COMM_H__
 #define __SHARED_COMM_H__
-#define MAX_LEN………_RECEIVE 100
+#define MAX_LEN………_RECEIVE 55
+#pragma warning( disable : 4996 )
 
 #include <stdio.h>
 #include <stdlib.h>

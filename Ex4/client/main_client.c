@@ -28,7 +28,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		}
 		else
 		{
-			client_action = CONNECT;
+			*client_action = CONNECT;
 			return SUCCESS;
 		}
 
@@ -36,17 +36,13 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	split(accepted_str, MASSAGE_TYPE, &str_cpy);
 	if (!strcmp(str_cpy,"SERVER_GAME_RESULTS"))
 	{
-		split(accepted_str, PARAM_1, &str_cpy);
-		strcpy(buffer, str_cpy);
-		printf("Bulls: %s\n", buffer);
-		split(accepted_str, PARAM_2, &str_cpy);
-		strcpy(buffer, str_cpy);
-		printf("Cows: %s\n", buffer);
-		split(accepted_str, PARAM_3, &str_cpy);
-		strcpy(buffer, str_cpy);
+		if(split(accepted_str, PARAM_1, &str_cpy)!= MALLOC_FAILED);
+		    printf("Bulls: %s\n", buffer);
+		if(split(accepted_str, PARAM_2, &str_cpy));
+		   printf("Cows: %s\n", buffer);
+		if(split(accepted_str, PARAM_3, &str_cpy));
 		printf("%s played:", buffer);
 		split(accepted_str, PARAM_4, &str_cpy);
-		strcpy(buffer, str_cpy);
 		printf("%s\n", buffer);
 		free(accepted_str);
 		return SUCCESS;
@@ -54,10 +50,8 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	else if ((!strcmp(str_cpy, "SERVER_WIN")))
 	{
 		split(accepted_str, PARAM_1, &str_cpy);
-		strcpy(buffer, str_cpy);
 		printf("%s won!\n", buffer);
 		split(accepted_str, PARAM_2, &str_cpy);
-		strcpy(buffer, str_cpy);
 		printf("opponents number was %s\n", buffer);
 		free(accepted_str);
 		return SUCCESS;
@@ -176,14 +170,16 @@ Status send_level(char* player_name, SEND_SERVER send_server, RECEIVE_SERVER rec
 		printf("Choose your 4 digits:");
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
-		return send_string(sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str), m_socket);
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
+		return send_string(send_str, m_socket);
 	}
 	if (receive_server == SERVER_PLAYER_MOVE_REQUEST)
 	{
 		printf("Choose your guess:");
 		gets_s(send_str, sizeof(send_str));
 		*client_action = RECEIVE;
-		return send_string(sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", send_str), m_socket);
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", send_str);
+		return send_string(send_str, m_socket);
 	}
 }
 

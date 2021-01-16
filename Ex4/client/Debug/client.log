@@ -1,2 +1,9 @@
-﻿  shared_communication.c
+﻿  main_client.c
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(289,62): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(289,50): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(299,71): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(299,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(301,72): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(301,51): warning C4024: 'setsockopt': different types for formal and actual parameter 4
+C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\client\main_client.c(190): warning C4715: 'send_level': not all control paths return a value
   client.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\client.exe
