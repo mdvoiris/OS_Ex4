@@ -109,7 +109,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	}
 	else if ((strcmp(param, "SERVER_DRAW")) == 0)
 	{
-		printf("It’s a tie\n");
+		printf("It's a tie\n");
 		free(accepted_str);
 		return SUCCESS;
 	}

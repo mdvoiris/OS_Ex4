@@ -171,7 +171,6 @@ Status admit_clients() {
                 return status;
             }
         }
-
         //if not first
         else if (client_thread_h[0] != NULL) {
             //if second
@@ -182,8 +181,12 @@ Status admit_clients() {
             else {
                 printf("more clients\n"); //REMOVE
                 //after that
-                //if thread 0 finished index = 0; else index = 1
-                index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : 1;
+                //if thread 0 finished index = 0; else index = 1 
+                index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : -1 ; //TODO
+                if (index == -1) //TODO
+                    index = (WaitForSingleObject(client_thread_h[1], 0) == WAIT_OBJECT_0) ? 1 : -1; //TODO
+                if (index == -1) //TODO
+                    continue; //TODO
             }
         }
         printf("first client\n"); //REMOVE
@@ -254,16 +257,16 @@ DWORD WINAPI monitor_exit(HANDLE main_thread_h) {
 }
 
 
-Status dismiss_client(AcceptSocket) {
+Status dismiss_client(SOCKET socket) {
     Status status = INVALID_STATUS_CODE;
     Comm_status comm_status = INVALID_COMM_STATUS;
 
-    comm_status = send_string("SERVER_DENIED;Reached max of 2 clients\n", socket);
+    comm_status = send_string("SERVER_DENIED\n", socket);
     if (comm_status) {
         return FAILED_TO_SEND_STRING;
     }
     //close MainSocket
-    status = (closesocket(AcceptSocket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+    status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
     report_error(status, false);
 
     return SUCCESS;
