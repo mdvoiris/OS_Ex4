@@ -279,7 +279,7 @@ Status main(int argc, char* argv[])
 		printf("Port server number is illegal try again");
 		return ILLEGAL_PORT;
 	}
-
+	printf("try copy\n");//REMOVE
 	strcpy_s(player_name, MAX_PLAYER_NAME, argv[PLAYER_NAME]);
 	server_address = inet_addr(argv[SERVER_ADDRESS]);
 	if (server_address == INADDR_NONE)
