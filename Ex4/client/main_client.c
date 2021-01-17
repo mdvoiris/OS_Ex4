@@ -28,9 +28,8 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	Comm_status recv_res;
 	char send_str[USER_ANSWER_LEN];
 
+
 	recv_res = receive_string(&accepted_str, m_socket);
-	if (recv_res == INVALID_COMM_STATUS)
-		return INVALID_STATUS_CODE;
 	if (recv_res == RECEIVE_DISCONNECTED)
 	{
 		free(accepted_str);
@@ -392,7 +391,6 @@ Status main(int argc, char* argv[])
 
 void report_error(Status status) {
 	switch (status) {
-	case INVALID_STATUS_CODE: break;//there allready was a print for this case
 	case FAILED_CREATE_SOCKET: printf("Error - Failed at socket_function %ld", WSAGetLastError()); exit(status);
 	case FAILED_CLOSE_SOCKET:  printf("Error - Failed at close_socket_function %ld", WSAGetLastError()); WSACleanup();exit(status);
 	case ALLOCTION_FAILED:     printf("Error - Failed at malloc_function"); break;

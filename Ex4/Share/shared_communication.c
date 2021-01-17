@@ -61,7 +61,7 @@ Comm_status receive_buffer(char* out_put_buffer, int bytes_to_receive, SOCKET sd
 		bytes_just_trans_ferred = recv(sd, cur_place_ptr, remaining_bytes_to_Receive, 0);
 		/*if (bytes_just_trans_ferred == 0 || WSAGetLastError() == WSAETIMEDOUT)
 			return RECEIVE_DISCONNECTED; // recv() returns zero if connection was gracefully disconnected.*/
-     	if (bytes_just_trans_ferred == SOCKET_ERROR)
+     	if ((bytes_just_trans_ferred == SOCKET_ERROR) || (bytes_just_trans_ferred == 0))
 			return RECEIVE_DISCONNECTED;
 		remaining_bytes_to_Receive -= bytes_just_trans_ferred;
 		cur_place_ptr += bytes_just_trans_ferred; // <ISP> pointer arithmetic
