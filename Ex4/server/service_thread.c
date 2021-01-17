@@ -4,10 +4,7 @@
 
 //Global veriables:
 const char file_name[] = "GameSession.txt";
-long int cur_file_pos = 0;
 bool file_exists = false;
-Player client = { 0 };
-Player opponent = { 0 };
 
 
 DWORD WINAPI service_thread(LPVOID lpParam)
@@ -19,10 +16,13 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 	HANDLE file_mutex = args->file_mutex;
 	HANDLE opponent_event = args->opponent_event;
 	HANDLE opponent_disconnect_event = args->opponent_disconnect_event;
+	Player client = { NULL };
+	Player opponent = { NULL };
 	char* recieved = NULL;
 	char* move_results = NULL;
 	char* match_verdict = NULL;
 	int move_results_size = 0;
+	long int cur_file_pos = 0;
 
 
 	//wait for CLIENT_REQUEST
@@ -32,9 +32,9 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		status = FAILED_TO_RECIEVE_STRING;
 		goto EXIT;
 	}
-
+	printf("recieved \t %s\n", recieved);
 	//get client name from recieved message
-	split(recieved, PARAM_1, &client.name);
+	split(recieved, PARAM_1, &(client.name));
 
 	//send SERVER_APPROVED
 	status = send_to_client(socket, REQUEST, NULL);
@@ -64,7 +64,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 			//search for an already connected opponent or wait for one
 			printf("looking for opponent\n");
-			status = look_for_opponent(file_mutex, opponent_event);
+			status = look_for_opponent(file_mutex, &cur_file_pos, opponent_event, &client, &opponent);
 			printf("finished looking for opponent\n");
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
@@ -112,10 +112,10 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 			}
 
 			//get client numbers from recieved message
-			split(recieved, PARAM_1, &client.numbers);
+			split(recieved, PARAM_1, &(client.numbers));
 
 			//get opponent numbers and share client numbers
-			status = share_numbers(file_mutex, opponent_event, SETUP);
+			status = share_numbers(file_mutex, &cur_file_pos, opponent_event, SETUP, &client, &opponent);
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -163,11 +163,11 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				}
 
 				//get client guess from recieved message
-				split(recieved, PARAM_1, &client.guess);
+				split(recieved, PARAM_1, &(client.guess));
 
 
 				//get opponent guess and share client guess
-				status = share_numbers(file_mutex, opponent_event, MOVE);
+				status = share_numbers(file_mutex, &cur_file_pos, opponent_event, MOVE, &client, &opponent);
 				if (status) {
 					//if failed because of opponent disconnect go back to main menu
 					if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -192,7 +192,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				}
 
 				//calculate move results and format them in a string
-				status = calculate_move_results(&move_results, move_results_size);
+				status = calculate_move_results(&move_results, move_results_size, &client, &opponent);
 				if (status) {
 					goto EXIT;
 				}
@@ -204,7 +204,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				}
 
 				//get move verdict
-				status = get_verdict(&match_verdict);
+				status = get_verdict(&match_verdict, &client, &opponent);
 				if (status) {
 					goto EXIT;
 				}
@@ -352,7 +352,7 @@ Status send_to_client(SOCKET socket, Stage stage, char* message) {
 	return SUCCESS;
 }
 
-Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
+Status share_numbers(HANDLE file_mutex, int *cur_file_pos, HANDLE opponent_event, Stage stage, Player *client, Player *opponent) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	DWORD return_value = 0;
@@ -361,28 +361,20 @@ Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
 
 
 	if (stage == SETUP) {
-		client.numbers = (char*)malloc(5 * sizeof(char));
-		if (opponent.guess == NULL) {
+		opponent->guess = (char*)malloc((NUM_OF_DIGITS + 1) * sizeof(char));
+		if (opponent->guess == NULL) {
 			return ALLOC_FAILED;
 		}
-		client.guess = (char*)malloc(5 * sizeof(char));
-		if (opponent.guess == NULL) {
+		opponent->numbers = (char*)malloc((NUM_OF_DIGITS + 1) * sizeof(char));
+		if (opponent->numbers == NULL) {
 			return ALLOC_FAILED;
 		}
-		opponent.numbers = (char*)malloc(5 * sizeof(char));
-		if (opponent.guess == NULL) {
-			return ALLOC_FAILED;
-		}
-		opponent.guess = (char*)malloc(5 * sizeof(char));
-		if (opponent.guess == NULL) {
-			return ALLOC_FAILED;
-		}
-		write_numbers = client.numbers;
-		read_numbers = opponent.numbers;
+		write_numbers = client->numbers;
+		read_numbers = opponent->numbers;
 	}
 	else {
-		write_numbers = client.guess;
-		read_numbers = opponent.guess;
+		write_numbers = client->guess;
+		read_numbers = opponent->guess;
 	}
 
 	//get file mutex
@@ -395,16 +387,16 @@ Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
 
 	fseek(session_file, 0, SEEK_END);
 	//if opponent entered
-	if (ftell(session_file) != cur_file_pos) {
+	if (ftell(session_file) != *cur_file_pos) {
 
 		//get opponent numbers
-		fseek(session_file, cur_file_pos, SEEK_SET);
-		fgets(read_numbers, 5, session_file);
+		fseek(session_file, *cur_file_pos, SEEK_SET);
+		fgets(read_numbers, (NUM_OF_DIGITS + 1), session_file);
 
 		//write your numbers
 		fseek(session_file, 0, SEEK_END);
 		fprintf_s(session_file, "%s\n", write_numbers);
-		cur_file_pos = ftell(session_file);
+		*cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
 		ReleaseMutex(file_mutex);
@@ -414,11 +406,11 @@ Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
 	}
 	//opponent didn't enter yet
 	else {
-		fseek(session_file, cur_file_pos, SEEK_SET);
+		fseek(session_file, *cur_file_pos, SEEK_SET);
 
 		//write your guess
 		fprintf_s(session_file, "%s;", write_numbers);
-		cur_file_pos = ftell(session_file);
+		*cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
 		ReleaseMutex(file_mutex);
@@ -437,11 +429,11 @@ Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
 				return FOPEN_FAIL;
 			}
 
-			fseek(session_file, cur_file_pos, SEEK_SET);
-			fgets(read_numbers, 5, session_file);
+			fseek(session_file, *cur_file_pos, SEEK_SET);
+			fgets(read_numbers, (NUM_OF_DIGITS + 1), session_file);
 
 			fseek(session_file, 0, SEEK_END);
-			cur_file_pos = ftell(session_file);
+			*cur_file_pos = ftell(session_file);
 
 			fclose(session_file);
 			ReleaseMutex(file_mutex);
@@ -455,7 +447,7 @@ Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage) {
 	return SUCCESS;
 }
 
-Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
+Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_event, Player* client, Player* opponent) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	int buffer_size = 0;
@@ -467,17 +459,17 @@ Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 		return UNRELEASED_MUTEX;
 
 	//check if file doesn't exist
-	if ((fopen_s(&session_file, file_name, "r")) != 0) {
+	if (file_exists == false) {
 
 		//create it
-		if ((fopen_s(&session_file, file_name, "w")) != 0) {
+		if ((fopen_s(&session_file, file_name, "wb")) != 0) {
 			return FOPEN_FAIL;
 		}
 		file_exists = true;
 
 		//write the client name and numbers
-		fprintf_s(session_file, "%s;", client.name);
-		cur_file_pos = ftell(session_file);
+		fprintf_s(session_file, "%s;", client->name);
+		*cur_file_pos = ftell(session_file);
 
 		//close file and release
 		fclose(session_file);
@@ -497,16 +489,16 @@ Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 			}
 
 			fseek(session_file, 0, SEEK_END);
-			buffer_size = (ftell(session_file) - cur_file_pos);
-			opponent.name = (char*)malloc(buffer_size * sizeof(char));
-			if (opponent.name == NULL) {
+			buffer_size = (ftell(session_file) - *cur_file_pos);
+			opponent->name = (char*)malloc(buffer_size * sizeof(char));
+			if (opponent->name == NULL) {
 				return ALLOC_FAILED;
 			}
-			fseek(session_file, cur_file_pos, SEEK_SET);
-			fgets(opponent.name, buffer_size, session_file);
+			fseek(session_file, *cur_file_pos, SEEK_SET);
+			fgets(opponent->name, buffer_size, session_file);
 
 			fseek(session_file, 0, SEEK_END);
-			cur_file_pos = ftell(session_file);
+			*cur_file_pos = ftell(session_file);
 
 			fclose(session_file);
 			ReleaseMutex(file_mutex);
@@ -539,18 +531,18 @@ Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 
 		fseek(session_file, 0, SEEK_END);
 		buffer_size = ftell(session_file);
-		opponent.name = (char*)malloc(buffer_size * sizeof(char));
-		if (opponent.name == NULL) {
+		opponent->name = (char*)malloc(buffer_size * sizeof(char));
+		if (opponent->name == NULL) {
 			return ALLOC_FAILED;
 		}
 		fseek(session_file, 0, SEEK_SET);
-		fgets(opponent.name, buffer_size, session_file);
+		fgets(opponent->name, buffer_size, session_file);
 
 		fseek(session_file, 0, SEEK_END);
 
 		//write the current user name
-		fprintf_s(session_file, "%s\n", client.name);
-		cur_file_pos = ftell(session_file);
+		fprintf_s(session_file, "%s\n", client->name);
+		*cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
 
@@ -563,35 +555,35 @@ Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event) {
 	return SUCCESS;
 }
 
-Status calculate_move_results(char** move_results, int buffer_size) {
+Status calculate_move_results(char** move_results, int buffer_size, Player* client, Player* opponent) {
 	Status status = INVALID_STATUS_CODE;
 	int bulls = 0;
 	int cows = 0;
 
 
 	for (int i = 0; i < NUM_OF_DIGITS; i++) {
-		if (client.guess[i] == opponent.numbers[i]) {
+		if (client->guess[i] == opponent->numbers[i]) {
 			bulls++;
 		}
 		else {
 			for (int j = 0; j < NUM_OF_DIGITS; j++) {
-				if (client.guess[i] == opponent.numbers[j])
+				if (client->guess[i] == opponent->numbers[j])
 					cows++;
 			}
 		}
 	}
 
-	sprintf_s(*move_results, buffer_size, "%d;%d;%s;%s", bulls, cows, opponent.name, opponent.guess);
+	sprintf_s(*move_results, buffer_size, "%d;%d;%s;%s", bulls, cows, opponent->name, opponent->guess);
 
 	return SUCCESS;
 }
 
-Status get_verdict(char** match_verdict) {
+Status get_verdict(char** match_verdict, Player* client, Player* opponent) {
 	Status status = INVALID_STATUS_CODE;
 	int buffer_size = 0;
 
 	//if draw
-	if ((strcmp(client.guess, opponent.numbers) == 0) && (strcmp(opponent.guess, client.numbers) == 0)) {
+	if ((strcmp(client->guess, opponent->numbers) == 0) && (strcmp(opponent->guess, client->numbers) == 0)) {
 		buffer_size = strlen("SERVER_DRAW\n") + 1;
 		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
 		if (*match_verdict == NULL) {
@@ -600,22 +592,22 @@ Status get_verdict(char** match_verdict) {
 		sprintf_s(*match_verdict, buffer_size, "SERVER_DRAW\n");
 	}
 	//else if client wins
-	else if (strcmp(client.guess, opponent.numbers) == 0) {
-		buffer_size = (strlen(client.name) + NUM_OF_DIGITS + 2);
+	else if (strcmp(client->guess, opponent->numbers) == 0) {
+		buffer_size = (strlen(client->name) + NUM_OF_DIGITS + 2);
 		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
 		if (*match_verdict == NULL) {
 			return ALLOC_FAILED;
 		}
-		sprintf_s(*match_verdict, buffer_size, "%s;%s", client.name, opponent.numbers);
+		sprintf_s(*match_verdict, buffer_size, "%s;%s", client->name, opponent->numbers);
 	}
 	//else if opponent wins
-	else if (strcmp(opponent.guess, opponent.numbers) == 0) {
-		buffer_size = (strlen(opponent.name) + NUM_OF_DIGITS + 2);
+	else if (strcmp(opponent->guess, opponent->numbers) == 0) {
+		buffer_size = (strlen(opponent->name) + NUM_OF_DIGITS + 2);
 		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
 		if (*match_verdict == NULL) {
 			return ALLOC_FAILED;
 		}
-		sprintf_s(*match_verdict, buffer_size, "%s;%s", opponent.name, opponent.numbers);
+		sprintf_s(*match_verdict, buffer_size, "%s;%s", opponent->name, opponent->numbers);
 	}
 
 
