@@ -389,11 +389,8 @@ Status main(int argc, char* argv[])
 void report_error(Status status) {
 	switch (status) {
 	case INVALID_STATUS_CODE: break;//there allready was a print for this case
-	case FAILED_SEND:          printf("Error - Failed at send_function %ld", WSAGetLastError()); break;
 	case FAILED_CREATE_SOCKET: printf("Error - Failed at socket_function %ld", WSAGetLastError()); exit(status);
-	case FAILED_RECEIVE:       printf("Error - Failed at recv_function %ld", WSAGetLastError()); break;
 	case FAILED_CLOSE_SOCKET:  printf("Error - Failed at close_socket_function %ld", WSAGetLastError()); WSACleanup();exit(status);
-	case FAILED_CONNECT:       printf("Error - Failed at connect_function %ld", WSAGetLastError()); break;
 	case ALLOCTION_FAILED:     printf("Error - Failed at malloc_function"); break;
 	case SET_SOCKET_FAILED:    printf("Error - Failed at set_socket_function %ld", WSAGetLastError()); break;
 	}
