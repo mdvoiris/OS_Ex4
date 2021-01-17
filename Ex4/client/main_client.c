@@ -254,7 +254,6 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 Status main(int argc, char* argv[])
 {
 	char player_name[MAX_PLAYER_NAME];
-	int set_socket_status;
 	CLIENT_ACTION client_action = SEND;
 	Status status = SUCCESS;
 	SOCKADDR_IN client_service = { 0 };
@@ -319,8 +318,7 @@ Status main(int argc, char* argv[])
 
 	linger_params.l_onoff = 1;
 	linger_params.l_linger = (DEFAULT_TIMEOUT / 1000); //in seconds
-	set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int));
-	if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
+	if(setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int)) == SOCKET_ERROR)
 	{
 		status = SET_SOCKET_FAILED;
 		report_error(status);
