@@ -24,7 +24,6 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 {
 	char* accepted_str = NULL;
 	char* param = NULL;
-	char buffer[MAX_LEN………_RECEIVE];
 	Comm_status recv_res;
 	char send_str[USER_ANSWER_LEN];
 
@@ -54,33 +53,33 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 		}
 
 	}
-	if (split(accepted_str, MASSAGE_TYPE, &param) == MALLOC_FAILED)
+	if (split(accepted_str, MASSAGE_TYPE, &param) != SUCCESS)
 		return ALLOCTION_FAILED;
 	if (strcmp(param,"SERVER_GAME_RESULTS") == 0)
 	{
-		if(split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
-		    printf("Bulls: %s\n", buffer);
+		if(SUCCESS == split(accepted_str, PARAM_1, &param))
+		    printf("Bulls: %s\n", param);
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		if(split(accepted_str, PARAM_2, &param))
-		   printf("Cows: %s\n", buffer);
+		if(SUCCESS == split(accepted_str, PARAM_2, &param))
+		   printf("Cows: %s\n", param);
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		if(split(accepted_str, PARAM_3, &param))
-		   printf("%s played:", buffer);
+		if(SUCCESS == split(accepted_str, PARAM_3, &param))
+		   printf("%s played:", param);
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		if(split(accepted_str, PARAM_4, &param))
-		   printf("%s\n", buffer);
+		if(SUCCESS == split(accepted_str, PARAM_4, &param))
+		   printf("%s\n", param);
 		else
 		{
 			free(accepted_str);
@@ -91,15 +90,15 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	}
 	else if ((strcmp(param, "SERVER_WIN")) == 0)
 	{
-		if (split(accepted_str, PARAM_1, &param)!= MALLOC_FAILED)
-		   printf("%s won!\n", buffer);
+		if (SUCCESS == split(accepted_str, PARAM_1, &param))
+		   printf("%s won!\n", param);
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		if(split(accepted_str, PARAM_2, &param)!= MALLOC_FAILED)
-		   printf("opponents number was %s\n", buffer);
+		if(SUCCESS == split(accepted_str, PARAM_2, &param))
+		   printf("opponents number was %s\n", param);
 		else
 		{
 			free(accepted_str);
@@ -193,6 +192,9 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 {
 	Comm_status send_res;
 	char send_str[MAX_LEN………_SEND];
+	char input_str[MAX_LEN………_SEND];
+
+
 	if (*send_server == CLIENT_REQUEST)
 	{
 		printf("sending client request\n"); //REMOVE
@@ -207,9 +209,9 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 	if (receive_server == SERVER_MAIN_MENU)
 	{
 		printf("Choose what to do next:\n1. Play against another client\n2. Quit\n");
-		gets_s(send_str, sizeof(send_str));
+		gets_s(input_str, sizeof(input_str));
 		*client_action = RECEIVE;
-		if (strcmp(send_str, "2") == 0)
+		if (strcmp(input_str, "2") == 0)
 		{
 			send_res = send_string("CLIENT_DISCONNECT\n", m_socket);
 			return USER_QUIT;
@@ -222,20 +224,9 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 	if (receive_server == SERVER_SETUP_REQUEST)
 	{
 		printf("Choose your 4 digits:");
-		gets_s(send_str, sizeof(send_str));
+		gets_s(input_str, sizeof(input_str));
 		*client_action = RECEIVE;
-		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
-		send_res = send_string(send_str, m_socket);
-		if (send_res == SEND_DISCONNECTED)
-			return ask_to_reconnect(&client_action, server_port, server_address);
-		return send_res;
-	}
-	if (receive_server == SERVER_SETUP_REQUEST)
-	{
-		printf("Choose your 4 digits:");
-		gets_s(send_str, sizeof(send_str));
-		*client_action = RECEIVE;
-		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", send_str);
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_SETUP:%s\n", input_str);
 		send_res = send_string(send_str, m_socket);
 		if (send_res == SEND_DISCONNECTED)
 			return ask_to_reconnect(&client_action, server_port, server_address);
@@ -244,9 +235,9 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 	if (receive_server == SERVER_PLAYER_MOVE_REQUEST)
 	{
 		printf("Choose your guess:");
-		gets_s(send_str, sizeof(send_str));
+		gets_s(input_str, sizeof(input_str));
 		*client_action = RECEIVE;
-		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", send_str);
+		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_PLAYER_MOVE:%s\n", input_str);
 		send_res = send_string(send_str, m_socket);
 		if (send_res == SEND_DISCONNECTED)
 			return ask_to_reconnect(&client_action, server_port, server_address);

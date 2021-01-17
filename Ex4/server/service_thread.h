@@ -34,12 +34,12 @@ DWORD WINAPI service_thread(LPVOID lpParam);
 
 Status send_to_client(SOCKET socket, Stage stage, char* message);
 
-Status share_numbers(HANDLE file_mutex, HANDLE opponent_event, Stage stage);
+Status share_numbers(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_event, Stage stage, Player *client, Player *opponent);
 
-Status calculate_move_results(char** move_results, int buffer_size);
+Status calculate_move_results(char** move_results, int buffer_size, Player* client, Player* opponent);
 
-Status look_for_opponent(HANDLE file_mutex, HANDLE opponent_event);
+Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_event, Player* client, Player* opponent);
 
-Status get_verdict(char** match_verdict);
+Status get_verdict(char** match_verdict, Player* client, Player* opponent);
 
 #endif
