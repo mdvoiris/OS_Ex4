@@ -253,7 +253,7 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 
 Status main(int argc, char* argv[])
 {
-	char player_name[MAX_PLAYER_NAME];
+	char player_name[MAX_PLAYER_NAME+1];
 	CLIENT_ACTION client_action = SEND;
 	Status status = SUCCESS;
 	SOCKADDR_IN client_service = { 0 };
@@ -279,8 +279,7 @@ Status main(int argc, char* argv[])
 		printf("Port server number is illegal try again");
 		return ILLEGAL_PORT;
 	}
-	printf("try copy\n");//REMOVE
-	strcpy_s(player_name, MAX_PLAYER_NAME, argv[PLAYER_NAME]);
+	strcpy_s(player_name, MAX_PLAYER_NAME + 1, argv[PLAYER_NAME]);
 	server_address = inet_addr(argv[SERVER_ADDRESS]);
 	if (server_address == INADDR_NONE)
 	{

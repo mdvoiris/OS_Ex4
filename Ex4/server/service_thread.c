@@ -101,17 +101,17 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 			//get opponent numbers and share client numbers
 			status = share_numbers(&file_params, opponent_event, SETUP, &client, &opponent);
-			//if opponent disconnect send message and go back to main menu
-			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
-				status = send_to_client(socket, OPPONENT_QUIT, NULL);
-				if (status) {
-					goto EXIT;
-				}
-				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
-				ResetEvent(opponent_disconnect_event);
-				continue;
-			}
 			if (status) {
+				//if failed because of opponent disconnect go back to main menu
+				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+					status = send_to_client(socket, OPPONENT_QUIT, NULL);
+					if (status) {
+						goto EXIT;
+					}
+					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+					ResetEvent(opponent_disconnect_event);
+					continue;
+				}
 				goto EXIT;
 			}
 
@@ -144,17 +144,17 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 				//get opponent guess and share client guess
 				status = share_numbers(&file_params, opponent_event, MOVE, &client, &opponent);
-				//if opponent disconnect send message and go back to main menu
-				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
-					status = send_to_client(socket, OPPONENT_QUIT, NULL);
-					if (status) {
-						goto EXIT;
-					}
-					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
-					ResetEvent(opponent_disconnect_event);
-					break;
-				}
 				if (status) {
+					//if failed because of opponent disconnect go back to main menu
+					if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+						status = send_to_client(socket, OPPONENT_QUIT, NULL);
+						if (status) {
+							goto EXIT;
+						}
+						free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+						ResetEvent(opponent_disconnect_event);
+						break;
+					}
 					goto EXIT;
 				}
 
