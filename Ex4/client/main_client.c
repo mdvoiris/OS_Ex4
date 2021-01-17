@@ -254,7 +254,6 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 Status main(int argc, char* argv[])
 {
 	char player_name[MAX_PLAYER_NAME];
-	int set_socket_status;
 	CLIENT_ACTION client_action = SEND;
 	Status status = SUCCESS;
 	SOCKADDR_IN client_service = { 0 };
@@ -265,6 +264,7 @@ Status main(int argc, char* argv[])
 	RECEIVE_SERVER receive_server = INVALID_STATUS_CODE;
 	char send_str[USER_ANSWER_LEN];
 	int timeout = TIMEOUT_SEND;
+	LINGER linger_params = { 0 };
 	WSADATA wsaData; //Create a WSADATA object called wsaData.
 //The WSADATA structure contains information about the Windows Sockets implementation.
 
@@ -316,6 +316,14 @@ Status main(int argc, char* argv[])
 	client_service.sin_addr.s_addr = server_address; //Setting the IP address to connect to
 	client_service.sin_port = htons(server_port); //Setting the port to connect to.
 
+	linger_params.l_onoff = 1;
+	linger_params.l_linger = (DEFAULT_TIMEOUT / 1000); //in seconds
+	if(setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int)) == SOCKET_ERROR)
+	{
+		status = SET_SOCKET_FAILED;
+		report_error(status);
+	}
+
 	while (1)
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
@@ -348,7 +356,10 @@ Status main(int argc, char* argv[])
 		{
 			timeout = TIMEOUT_SEND;
 			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
-				return SET_SOCKET_FAILED;
+			{
+				status = SET_SOCKET_FAILED;
+				report_error(status);
+			}
 			status = send_level(player_name, &send_server, receive_server, &client_action, server_port, argv[SERVER_ADDRESS]);
 			if (status != SUCCESS && status != USER_QUIT)
 				report_error(status);
@@ -360,16 +371,20 @@ Status main(int argc, char* argv[])
 			if (send_server == CLIENT_VERSUS)
 			{
 				timeout = TIMEOUT_RECEIVE_LONG;
-				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
-				if (set_socket_status == SOCKET_ERROR)
-					return SET_SOCKET_FAILED;
+				if(setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
+				{
+					status = SET_SOCKET_FAILED;
+					report_error(status);
+				}
 			}
 			else
 			{
 				timeout = TIMEOUT_RECEIVE_SHORT;
-				set_socket_status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
-				if (set_socket_status == SOCKET_ERROR)
-					return SET_SOCKET_FAILED;
+				if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
+				{
+					status = SET_SOCKET_FAILED;
+					report_error(status);
+				}
 			}
 			char* AcceptedStr = NULL;
 			status = receive_level(&receive_server, &client_action, server_port, argv[SERVER_ADDRESS]);
