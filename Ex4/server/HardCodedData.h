@@ -35,7 +35,8 @@ typedef enum _status {
     FAILED_TO_REMOVE_FILE,
     UNRELEASED_MUTEX,
     FOPEN_FAIL,
-    ALLOC_FAILED
+    ALLOC_FAILED,
+    FAILED_TO_SET_SOCKET_OPT
 } Status;
 
 
