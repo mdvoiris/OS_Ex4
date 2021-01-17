@@ -287,7 +287,7 @@ Status dismiss_client(SOCKET socket) {
 
 void clients_cleanup(Client_args client_args) {
     Status status = INVALID_STATUS_CODE;
-    DWORD return_value[NUM_OF_SLOTS];
+    DWORD return_value[NUM_OF_SLOTS] = { NULL };
     int num_of_threads = 0;
 
 
@@ -331,9 +331,9 @@ void clients_cleanup(Client_args client_args) {
     //make sure threads exited and close handles
     for (int i = 0; i < NUM_OF_SLOTS; i++) {
         if (client_thread_h[i] != NULL) {
-            GetExitCodeThread(client_thread_h[i], &(return_value[i]));
+            GetExitCodeThread(client_thread_h[i], &return_value);
 
-            if (return_value[i] == STILL_ACTIVE) {
+            if (return_value == STILL_ACTIVE) {
                 TerminateThread(client_thread_h[i], -1);
             }
 
