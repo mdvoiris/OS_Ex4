@@ -171,7 +171,7 @@ Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_a
 	{
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
-			printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit", server_address, server_port);
+			printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 			gets_s(send_str, sizeof(send_str)); //Reading a string from the keyboard
 			if (STRINGS_ARE_EQUAL(send_str, "1"))
 				continue;
