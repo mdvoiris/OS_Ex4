@@ -51,8 +51,7 @@ Status main(int argc, char* argv[])
         report_error(status, true);
     }
 
-
-
+    CloseHandle(exit_event);
     CloseHandle(exit_thread_h);
 
     if (WSACleanup() == SOCKET_ERROR)
@@ -109,9 +108,11 @@ Status start_socket() {
 Status admit_clients() {
     Status status = INVALID_STATUS_CODE;
     SOCKET AcceptSocket = INVALID_SOCKET;
-    int client_count = 0;
     int index = 0;
     Client_args client_args = { 0 };
+    LINGER linger_params = { 0 };
+    const char file_name[] = "GameSession.txt";
+    bool file_exists = false;
 
 
     //Create exit event to signal threads to exit
@@ -142,12 +143,14 @@ Status admit_clients() {
         return FAILED_TO_CREATE_MUTEX;
     }
 
+    client_args.exit_event = exit_event;
+    client_args.file_name = &file_name;
+    client_args.file_exists_p = &file_exists;
+
     //Client admitting loop
     while (true)
     {
-        printf("waiting for accept\n"); //REMOVE
         AcceptSocket = accept(MainSocket, NULL, NULL);
-        printf("client accepted\n"); //REMOVE
         if (AcceptSocket == INVALID_SOCKET)
         {
             //if exit called, return success
@@ -162,36 +165,38 @@ Status admit_clients() {
             }
         }
 
-        //if reached maximum clients
-        if (client_count >= NUM_OF_SLOTS) {
-            //dissmiss client
-            status = dismiss_client(AcceptSocket);
-            if (status) {
-                clients_cleanup(client_args);
-                return status;
-            }
-        }
+        //configure socket to linger for queued data to be sent before closing socket
+        linger_params.l_onoff = 1;
+        linger_params.l_linger = (DEFAULT_TIMEOUT/1000); //in seconds
+        setsockopt(AcceptSocket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int));
+
         //if not first
-        else if (client_thread_h[0] != NULL) {
+        if (client_thread_h[0] != NULL) {
             //if second
-            printf("second client\n"); //REMOVE
             if (client_thread_h[1] == NULL) {
                 index = 1;
             }
+            //after that
             else {
-                printf("more clients\n"); //REMOVE
-                //after that
-                //if thread 0 finished index = 0; else index = 1 
-                index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : -1 ; //TODO
-                if (index == -1) //TODO
-                    index = (WaitForSingleObject(client_thread_h[1], 0) == WAIT_OBJECT_0) ? 1 : -1; //TODO
-                if (index == -1) //TODO
-                    continue; //TODO
+                //if thread 0 finished index = 0; else index = -1 
+                index = (WaitForSingleObject(client_thread_h[0], 0) == WAIT_OBJECT_0) ? 0 : -1 ;
+                if (index == -1)
+                    //else if thread 1 finished index = 1; else index = -1 
+                    index = (WaitForSingleObject(client_thread_h[1], 0) == WAIT_OBJECT_0) ? 1 : -1;
+                if (index == -1) {
+                    //else dissmiss client, serving 2 clients
+                    status = dismiss_client(AcceptSocket);
+                    if (status) {
+                        clients_cleanup(client_args);
+                        return status;
+                    }
+                    continue;
+                }
             }
         }
-        printf("first client\n"); //REMOVE
 
         sockets_h[index] = AcceptSocket;
+
         client_args.socket = AcceptSocket;
         ResetEvent(client_args.opponent_event);
         ResetEvent(client_args.opponent_disconnect_event);
@@ -208,8 +213,6 @@ Status admit_clients() {
             clients_cleanup(client_args);
             return FAILED_TO_CREATE_THREAD;
         }
-
-        client_count++;
     }
 
 
@@ -225,7 +228,7 @@ Status start_exit_thread() {
         NULL,                   // default security attributes
         0,                      // use default stack size  
         monitor_exit,           // thread function name
-        GetCurrentThread(),     // argument to thread function 
+        NULL,     // argument to thread function 
         0,                      // use default creation flags 
         NULL);
 
@@ -236,9 +239,9 @@ Status start_exit_thread() {
     return SUCCESS;
 }
 
-DWORD WINAPI monitor_exit(HANDLE main_thread_h) {
+DWORD WINAPI monitor_exit(LPVOID lpParam) {
     Status status = INVALID_STATUS_CODE;
-    char buffer[6] = { 0 }; //enough for "exit"
+    char buffer[6] = { 0 }; //enough for "exit\n"
 
     while (true)
     {
@@ -260,12 +263,20 @@ DWORD WINAPI monitor_exit(HANDLE main_thread_h) {
 Status dismiss_client(SOCKET socket) {
     Status status = INVALID_STATUS_CODE;
     Comm_status comm_status = INVALID_COMM_STATUS;
+    char* recieved = NULL;
 
+    //wait for CLIENT_REQUEST
+    comm_status = receive_string(&recieved, socket);
+    if (comm_status) {
+        return FAILED_TO_RECIEVE_STRING;
+    }
+    //send SERVER_DENIED
     comm_status = send_string("SERVER_DENIED\n", socket);
     if (comm_status) {
         return FAILED_TO_SEND_STRING;
     }
-    //close MainSocket
+
+    //close socket
     status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
     report_error(status, false);
 
@@ -275,7 +286,7 @@ Status dismiss_client(SOCKET socket) {
 
 void clients_cleanup(Client_args client_args) {
     Status status = INVALID_STATUS_CODE;
-    DWORD return_value = 0;
+    DWORD return_value[NUM_OF_SLOTS] = { NULL };
     int num_of_threads = 0;
 
 
@@ -284,32 +295,47 @@ void clients_cleanup(Client_args client_args) {
         report_error(FAILED_TO_SET_EVENT, false);
     }
 
-    //wait for open client thread to exit
-    if (client_thread_h[0] != NULL && client_thread_h[1] != NULL) {
-        return_value = WaitForMultipleObjects(NUM_OF_SLOTS, client_thread_h, TRUE, DEFAULT_TIMEOUT);
-    }
-    else if (client_thread_h[0] != NULL) {
-        return_value = WaitForSingleObject(client_thread_h[0], DEFAULT_TIMEOUT);
-    }
-    else if (client_thread_h[1] != NULL) {
-        return_value = WaitForSingleObject(client_thread_h[1], DEFAULT_TIMEOUT);
+    //findout what clients are active
+    for (int i = 0; i < NUM_OF_SLOTS; i++) {
+        if (client_thread_h[i] != NULL) {
+            GetExitCodeThread(client_thread_h[i], &(return_value[i]));
+        }
     }
 
-    if (return_value == WAIT_FAILED)
-        report_error(FAILED_TO_WAIT, false);
+    //close active client sockets and wait for threads to exit
+    //if both clients active
+    if (return_value[0] == STILL_ACTIVE && return_value[1] == STILL_ACTIVE) {
+        status = (closesocket(sockets_h[0]) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+        report_error(status, false);
+        status = (closesocket(sockets_h[1]) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+        report_error(status, false);
+        if (WAIT_FAILED == WaitForMultipleObjects(NUM_OF_SLOTS, client_thread_h, TRUE, DEFAULT_TIMEOUT))
+            report_error(FAILED_TO_WAIT, false);
+    }
+    //if only client 0 active
+    else if (return_value[0] == STILL_ACTIVE) {
+        status = (closesocket(sockets_h[0]) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+        report_error(status, false);
+        if (WAIT_FAILED == WaitForSingleObject(client_thread_h[0], DEFAULT_TIMEOUT))
+            report_error(FAILED_TO_WAIT, false);
+    }
+    //if only client 1 active
+    else if (return_value[1] == STILL_ACTIVE) {
+        status = (closesocket(sockets_h[1]) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+        report_error(status, false);
+        if (WAIT_FAILED == WaitForSingleObject(client_thread_h[1], DEFAULT_TIMEOUT))
+            report_error(FAILED_TO_WAIT, false);
+    }
 
-
+    //make sure threads exited and close handles
     for (int i = 0; i < NUM_OF_SLOTS; i++) {
         if (client_thread_h[i] != NULL) {
             GetExitCodeThread(client_thread_h[i], &return_value);
 
-            if (return_value == STILL_ACTIVE)
+            if (return_value == STILL_ACTIVE) {
                 TerminateThread(client_thread_h[i], -1);
-
-            if (sockets_h[i] != INVALID_SOCKET) {
-                status = (closesocket(sockets_h[i]) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-                report_error(status, false);
             }
+
             CloseHandle(client_thread_h[i]);
             client_thread_h[i] = NULL;
         }
@@ -318,7 +344,6 @@ void clients_cleanup(Client_args client_args) {
     CloseHandle(client_args.file_mutex);
     CloseHandle(client_args.opponent_event);
     CloseHandle(client_args.opponent_disconnect_event);
-    CloseHandle(exit_event);
 }
 
 

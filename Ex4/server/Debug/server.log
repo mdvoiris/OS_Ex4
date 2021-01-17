@@ -1,5 +1,9 @@
-﻿  shared_communication.c
-  main_server.c
+﻿  main_server.c
+C:\Users\Maor\source\repos\OS_Ex4\Ex4\server\main_server.c(147,39): warning C4047: '=': 'const char *' differs in levels of indirection from 'const char (*)[16]'
+C:\Users\Maor\source\repos\OS_Ex4\Ex4\server\main_server.c(333,64): warning C4047: 'function': 'LPDWORD' differs in levels of indirection from 'DWORD (*)[2]'
+C:\Users\Maor\source\repos\OS_Ex4\Ex4\server\main_server.c(333,51): warning C4024: 'GetExitCodeThread': different types for formal and actual parameter 2
+C:\Users\Maor\source\repos\OS_Ex4\Ex4\server\main_server.c(335,45): warning C4047: '==': 'DWORD [2]' differs in levels of indirection from 'DWORD'
+C:\Users\Maor\source\repos\OS_Ex4\Ex4\server\main_server.c(289,1): warning C4047: 'initializing': 'DWORD' differs in levels of indirection from 'void *'
   service_thread.c
   Generating Code...
-  server.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\server.exe
+  server.vcxproj -> C:\Users\Maor\source\repos\OS_Ex4\Ex4\Debug\server.exe

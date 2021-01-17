@@ -21,6 +21,9 @@ typedef struct _client_args {
 	HANDLE file_mutex;
 	HANDLE opponent_event;
 	HANDLE opponent_disconnect_event;
+	HANDLE exit_event;
+	const char* file_name;
+	bool* file_exists_p;
 }Client_args;
 
 
@@ -29,7 +32,7 @@ Status start_socket();
 
 Status start_exit_thread();
 
-DWORD WINAPI monitor_exit(HANDLE main_thread_h);
+DWORD WINAPI monitor_exit(LPVOID lpParam);
 
 Status admit_clients();
 

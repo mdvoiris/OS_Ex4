@@ -2,37 +2,37 @@
 #include "service_thread.h"
 
 
-//Global veriables:
-const char file_name[] = "GameSession.txt";
-bool file_exists = false;
-
-
 DWORD WINAPI service_thread(LPVOID lpParam)
 {
 	Status status = INVALID_STATUS_CODE;
 	Comm_status comm_status = INVALID_COMM_STATUS;
 	Client_args* args = (Client_args*)lpParam;
 	SOCKET socket = args->socket;
-	HANDLE file_mutex = args->file_mutex;
 	HANDLE opponent_event = args->opponent_event;
 	HANDLE opponent_disconnect_event = args->opponent_disconnect_event;
+	HANDLE exit_event = args->exit_event;
+	File_params file_params = { NULL };
 	Player client = { NULL };
 	Player opponent = { NULL };
 	char* recieved = NULL;
 	char* move_results = NULL;
 	char* match_verdict = NULL;
 	int move_results_size = 0;
-	long int cur_file_pos = 0;
 
+
+	//initiate file params
+	file_params.file_mutex = args->file_mutex;
+	file_params.file_name = args->file_name;
+	file_params.file_exists_p = args->file_exists_p;
+	file_params.cur_file_pos = 0;
 
 	//wait for CLIENT_REQUEST
-	printf("waiting for CLIENT_REQUEST\n"); //REMOVE
 	comm_status = receive_string(&recieved, socket);
 	if (comm_status) { 
 		status = FAILED_TO_RECIEVE_STRING;
 		goto EXIT;
 	}
-	printf("recieved \t %s\n", recieved);
+
 	//get client name from recieved message
 	split(recieved, PARAM_1, &(client.name));
 
@@ -51,9 +51,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		}
 
 		//wait for client choice
-		printf("waiting for client choise\n");
 		comm_status = receive_string(&recieved, socket);
-		printf("finished waiting for client choise, recieved \t %s\n", recieved);
 		if (comm_status) {
 			status = FAILED_TO_RECIEVE_STRING;
 			goto EXIT;
@@ -63,9 +61,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		if (strcmp(recieved,"CLIENT_VERSUS\n") == 0) {
 
 			//search for an already connected opponent or wait for one
-			printf("looking for opponent\n");
-			status = look_for_opponent(file_mutex, &cur_file_pos, opponent_event, &client, &opponent);
-			printf("finished looking for opponent\n");
+			status = look_for_opponent(&file_params, opponent_event, &client, &opponent);
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -73,16 +69,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					if (status) {
 						goto EXIT;
 					}
-					//get file mutex
-					if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-						report_error(UNRELEASED_MUTEX, false);
-					//remove session file
-					if (file_exists) {
-						if (remove(file_name) != 0)
-							report_error(FAILED_TO_REMOVE_FILE, false);
-						file_exists = false;
-					}
-					ReleaseMutex(file_mutex);
+					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
 					ResetEvent(opponent_disconnect_event);
 					continue;
 				}
@@ -91,13 +78,11 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 			//if can't find another opponent
 			if (opponent.name == NULL) {
-				printf("can't find opponent\n");
 				//send SERVER_NO_OPPONENTS
 				status = send_to_client(socket, NO_OPPONENT, NULL);
 				//back to main menu
 				continue;
 			}
-			printf("found opponent\n");
 			//send SERVER_INVITE and SERVER_SETUP_REUEST
 			status = send_to_client(socket, SETUP, opponent.name);
 			if (status) {
@@ -115,7 +100,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 			split(recieved, PARAM_1, &(client.numbers));
 
 			//get opponent numbers and share client numbers
-			status = share_numbers(file_mutex, &cur_file_pos, opponent_event, SETUP, &client, &opponent);
+			status = share_numbers(&file_params, opponent_event, SETUP, &client, &opponent);
 			if (status) {
 				//if failed because of opponent disconnect go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -123,16 +108,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					if (status) {
 						goto EXIT;
 					}
-					//get file mutex
-					if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-						report_error(UNRELEASED_MUTEX, false);
-					//remove session file
-					if (file_exists) {
-						if (remove(file_name) != 0)
-							report_error(FAILED_TO_REMOVE_FILE, false);
-						file_exists = false;
-					}
-					ReleaseMutex(file_mutex);
+					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
 					ResetEvent(opponent_disconnect_event);
 					continue;
 				}
@@ -167,7 +143,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 
 
 				//get opponent guess and share client guess
-				status = share_numbers(file_mutex, &cur_file_pos, opponent_event, MOVE, &client, &opponent);
+				status = share_numbers(&file_params, opponent_event, MOVE, &client, &opponent);
 				if (status) {
 					//if failed because of opponent disconnect go back to main menu
 					if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
@@ -175,16 +151,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 						if (status) {
 							goto EXIT;
 						}
-						//get file mutex
-						if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-							report_error(UNRELEASED_MUTEX, false);
-						//remove session file
-						if (file_exists) {
-							if (remove(file_name) != 0)
-								report_error(FAILED_TO_REMOVE_FILE, false);
-							file_exists = false;
-						}
-						ReleaseMutex(file_mutex);
+						free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
 						ResetEvent(opponent_disconnect_event);
 						break;
 					}
@@ -216,20 +183,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					if (status) {
 						goto EXIT;
 					}
-					free(move_results);
-					free(match_verdict);
-					move_results = NULL;
-					match_verdict = NULL;
-					//get file mutex
-					if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-						report_error(UNRELEASED_MUTEX, false);
-					//remove session file
-					if (file_exists) {
-						if (remove(file_name) != 0)
-							report_error(FAILED_TO_REMOVE_FILE, false);
-						file_exists = false;
-					}
-					ReleaseMutex(file_mutex);
+					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
 					//back to main menu
 					break;
 				}
@@ -249,26 +203,65 @@ EXIT:
 	//signal opponent that client disconnected
 	if (!SetEvent(opponent_disconnect_event))
 		report_error(FAILED_TO_SET_EVENT, false);
-	//get file mutex
-	if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-		report_error(UNRELEASED_MUTEX, false);
-	//remove session file
-	if (file_exists) {
-		if (remove(file_name) != 0)
-			report_error(FAILED_TO_REMOVE_FILE, false);
-		file_exists = false;
+
+	//free memory
+	free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+	if (client.name != NULL)
+		free(client.name);
+
+	//if exit event happend in main thread, finish successfuly, no need to close socket
+	if (WaitForSingleObject(exit_event, 0) == WAIT_OBJECT_0) {
+		return SUCCESS;
 	}
-	ReleaseMutex(file_mutex);
-	if (move_results != NULL)
-		free(move_results);
-	if (match_verdict != NULL)
-		free(match_verdict);
-	report_error(status, false);
-	status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
-	report_error(status, false);
-	return status;
+	else {
+		report_error(status, false);
+		status = (closesocket(socket) == SOCKET_ERROR) ? FAILED_TO_CLOSE_SOCKET : SUCCESS;
+		report_error(status, false);
+		return status;
+	}
 }
 
+void free_match_memory(File_params* file_params, Player* client, Player* opponent, char** move_results, char** match_verdict) {
+	if (*move_results != NULL) {
+		free(*move_results);
+		*move_results = NULL;
+	}
+	if (*match_verdict != NULL) {
+		free(*match_verdict);
+		*match_verdict = NULL;
+	}
+	if (opponent->name != NULL) {
+		free(opponent->name);
+		opponent->name = NULL;
+	}
+	if (opponent->numbers != NULL) {
+		free(opponent->numbers);
+		opponent->numbers = NULL;
+	}
+	if (opponent->guess != NULL) {
+		free(opponent->guess);
+		opponent->guess = NULL;
+	}
+	if (client->numbers != NULL) {
+		free(client->numbers);
+		client->numbers = NULL;
+	}
+	if (client->guess != NULL) {
+		free(opponent->guess);
+		client->guess = NULL;
+	}
+
+	//get file mutex
+	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+		report_error(UNRELEASED_MUTEX, false);
+	//remove session file
+	if (*(file_params->file_exists_p)) {
+		if (remove(file_params->file_name) != 0)
+			report_error(FAILED_TO_REMOVE_FILE, false);
+		*(file_params->file_exists_p) = false;
+	}
+	ReleaseMutex(file_params->file_mutex);
+}
 
 Status send_to_client(SOCKET socket, Stage stage, char* message) {
 	Status status = INVALID_STATUS_CODE;
@@ -352,7 +345,7 @@ Status send_to_client(SOCKET socket, Stage stage, char* message) {
 	return SUCCESS;
 }
 
-Status share_numbers(HANDLE file_mutex, int *cur_file_pos, HANDLE opponent_event, Stage stage, Player *client, Player *opponent) {
+Status share_numbers(File_params* file_params, HANDLE opponent_event, Stage stage, Player *client, Player *opponent) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	DWORD return_value = 0;
@@ -378,42 +371,42 @@ Status share_numbers(HANDLE file_mutex, int *cur_file_pos, HANDLE opponent_event
 	}
 
 	//get file mutex
-	if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 		return UNRELEASED_MUTEX;
 
-	if ((fopen_s(&session_file, file_name, "rb+")) != 0) {
+	if ((fopen_s(&session_file, file_params->file_name, "rb+")) != 0) {
 		return FOPEN_FAIL;
 	}
 
 	fseek(session_file, 0, SEEK_END);
 	//if opponent entered
-	if (ftell(session_file) != *cur_file_pos) {
+	if (ftell(session_file) != file_params->cur_file_pos) {
 
 		//get opponent numbers
-		fseek(session_file, *cur_file_pos, SEEK_SET);
+		fseek(session_file, file_params->cur_file_pos, SEEK_SET);
 		fgets(read_numbers, (NUM_OF_DIGITS + 1), session_file);
 
 		//write your numbers
 		fseek(session_file, 0, SEEK_END);
 		fprintf_s(session_file, "%s\n", write_numbers);
-		*cur_file_pos = ftell(session_file);
+		file_params->cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
-		ReleaseMutex(file_mutex);
+		ReleaseMutex(file_params->file_mutex);
 		if (!SetEvent(opponent_event)) {
 			return FAILED_TO_SET_EVENT;
 		}
 	}
 	//opponent didn't enter yet
 	else {
-		fseek(session_file, *cur_file_pos, SEEK_SET);
+		fseek(session_file, file_params->cur_file_pos, SEEK_SET);
 
 		//write your guess
 		fprintf_s(session_file, "%s;", write_numbers);
-		*cur_file_pos = ftell(session_file);
+		file_params->cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
-		ReleaseMutex(file_mutex);
+		ReleaseMutex(file_params->file_mutex);
 
 
 		//wait for opponent
@@ -422,21 +415,21 @@ Status share_numbers(HANDLE file_mutex, int *cur_file_pos, HANDLE opponent_event
 		if (return_value == WAIT_OBJECT_0) {
 
 			//get file mutex
-			if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 				return UNRELEASED_MUTEX;
 
-			if ((fopen_s(&session_file, file_name, "rb")) != 0) {
+			if ((fopen_s(&session_file, file_params->file_name, "rb")) != 0) {
 				return FOPEN_FAIL;
 			}
 
-			fseek(session_file, *cur_file_pos, SEEK_SET);
+			fseek(session_file, file_params->cur_file_pos, SEEK_SET);
 			fgets(read_numbers, (NUM_OF_DIGITS + 1), session_file);
 
 			fseek(session_file, 0, SEEK_END);
-			*cur_file_pos = ftell(session_file);
+			file_params->cur_file_pos = ftell(session_file);
 
 			fclose(session_file);
-			ReleaseMutex(file_mutex);
+			ReleaseMutex(file_params->file_mutex);
 			ResetEvent(opponent_event);
 		}
 		else {
@@ -447,7 +440,7 @@ Status share_numbers(HANDLE file_mutex, int *cur_file_pos, HANDLE opponent_event
 	return SUCCESS;
 }
 
-Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_event, Player* client, Player* opponent) {
+Status look_for_opponent(File_params* file_params, HANDLE opponent_event, Player* client, Player* opponent) {
 	Status status = INVALID_STATUS_CODE;
 	FILE* session_file = NULL;
 	int buffer_size = 0;
@@ -455,25 +448,25 @@ Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_e
 
 
 	//get file mutex
-	if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 		return UNRELEASED_MUTEX;
 
 	//check if file doesn't exist
-	if (file_exists == false) {
+	if (*(file_params->file_exists_p) == false) {
 
 		//create it
-		if ((fopen_s(&session_file, file_name, "wb")) != 0) {
+		if ((fopen_s(&session_file, file_params->file_name, "wb")) != 0) {
 			return FOPEN_FAIL;
 		}
-		file_exists = true;
+		*(file_params->file_exists_p) = true;
 
 		//write the client name and numbers
 		fprintf_s(session_file, "%s;", client->name);
-		*cur_file_pos = ftell(session_file);
+		file_params->cur_file_pos = ftell(session_file);
 
 		//close file and release
 		fclose(session_file);
-		ReleaseMutex(file_mutex);
+		ReleaseMutex(file_params->file_mutex);
 
 		//wait for opponent
 		return_value = WaitForSingleObject(opponent_event, DEFAULT_TIMEOUT);
@@ -481,41 +474,41 @@ Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_e
 		if (return_value == WAIT_OBJECT_0) {
 
 			//get file mutex
-			if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 				return UNRELEASED_MUTEX;
 
-			if ((fopen_s(&session_file, file_name, "rb")) != 0) {
+			if ((fopen_s(&session_file, file_params->file_name, "rb")) != 0) {
 				return FOPEN_FAIL;
 			}
 
 			fseek(session_file, 0, SEEK_END);
-			buffer_size = (ftell(session_file) - *cur_file_pos);
+			buffer_size = (ftell(session_file) - file_params->cur_file_pos);
 			opponent->name = (char*)malloc(buffer_size * sizeof(char));
 			if (opponent->name == NULL) {
 				return ALLOC_FAILED;
 			}
-			fseek(session_file, *cur_file_pos, SEEK_SET);
+			fseek(session_file, file_params->cur_file_pos, SEEK_SET);
 			fgets(opponent->name, buffer_size, session_file);
 
 			fseek(session_file, 0, SEEK_END);
-			*cur_file_pos = ftell(session_file);
+			file_params->cur_file_pos = ftell(session_file);
 
 			fclose(session_file);
-			ReleaseMutex(file_mutex);
+			ReleaseMutex(file_params->file_mutex);
 			ResetEvent(opponent_event);
 		}
 		//no opponent joined
 		else if (return_value == WAIT_TIMEOUT) {
 			//get file mutex
-			if (WaitForSingleObject(file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 				report_error(UNRELEASED_MUTEX, false);
 			//remove session file
-			if (file_exists) {
-				if (remove(file_name) != 0)
+			if (*(file_params->file_exists_p)) {
+				if (remove(file_params->file_name) != 0)
 					report_error(FAILED_TO_REMOVE_FILE, false);
-				file_exists = false;
+				*(file_params->file_exists_p) = false;
 			}
-			ReleaseMutex(file_mutex);
+			ReleaseMutex(file_params->file_mutex);
 			ResetEvent(opponent_event);
 		}
 		else {
@@ -525,7 +518,7 @@ Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_e
 	//if file exists
 	else {
 
-		if ((fopen_s(&session_file, file_name, "rb+")) != 0) {
+		if ((fopen_s(&session_file, file_params->file_name, "rb+")) != 0) {
 			return FOPEN_FAIL;
 		}
 
@@ -542,11 +535,11 @@ Status look_for_opponent(HANDLE file_mutex, int* cur_file_pos, HANDLE opponent_e
 
 		//write the current user name
 		fprintf_s(session_file, "%s\n", client->name);
-		*cur_file_pos = ftell(session_file);
+		file_params->cur_file_pos = ftell(session_file);
 
 		fclose(session_file);
 
-		ReleaseMutex(file_mutex);
+		ReleaseMutex(file_params->file_mutex);
 		if (!SetEvent(opponent_event)) {
 			return FAILED_TO_SET_EVENT;
 		}

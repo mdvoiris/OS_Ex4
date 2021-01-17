@@ -28,9 +28,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	Comm_status recv_res;
 	char send_str[USER_ANSWER_LEN];
 
-	printf("waiting for server approved\n"); //REMOVE
 	recv_res = receive_string(&accepted_str, m_socket);
-	printf("recieved string:\t %s\n", accepted_str); //REMOVE
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
 	if (recv_res == RECEIVE_DISCONNECTED)
@@ -202,7 +200,6 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 
 	if (*send_server == CLIENT_REQUEST)
 	{
-		printf("sending client request\n"); //REMOVE
 		*client_action = RECEIVE;
 		sprintf_s(send_str, MAX_LEN………_SEND, "CLIENT_REQUEST:%s\n", player_name);
 		*send_server = CLIENT_INVALID;
@@ -322,7 +319,6 @@ Status main(int argc, char* argv[])
 
 	while (1)
 	{
-		printf("trying to connect\n"); //REMOVE
 		if (connect(m_socket, (SOCKADDR*)&client_service, sizeof(client_service)) == SOCKET_ERROR)
 		{
 			printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", argv[SERVER_ADDRESS], server_port);
@@ -351,7 +347,6 @@ Status main(int argc, char* argv[])
 		//send block
 		if (client_action == SEND)
 		{
-			printf("eneterd send\n"); //REMOVE
 			timeout = TIMEOUT_SEND;
 			if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int)) == SOCKET_ERROR)
 				return SET_SOCKET_FAILED;
