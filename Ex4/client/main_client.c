@@ -24,6 +24,7 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 {
 	char* accepted_str = NULL;
 	char* param = NULL;
+	char* message = NULL;
 	Comm_status recv_res;
 	char send_str[USER_ANSWER_LEN];
 
@@ -32,11 +33,6 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 	printf("recieved string:\t %s\n", accepted_str); //REMOVE
 	if (recv_res == INVALID_COMM_STATUS)
 		return INVALID_STATUS_CODE;
-	/*if (recv_res == COMM_FAILED)
-	{
-		return FAILED_RECEIVE;
-		free(accepted_str);
-	}*/
 	if (recv_res == RECEIVE_DISCONNECTED)
 	{
 		free(accepted_str);
@@ -51,86 +47,94 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 			*client_action = CONNECT;
 			return SUCCESS;
 		}
-
 	}
-	if (split(accepted_str, MASSAGE_TYPE, &param) != SUCCESS)
+	if (split(accepted_str, MASSAGE_TYPE, &message) != SUCCESS)
 		return ALLOCTION_FAILED;
-	if (strcmp(param,"SERVER_GAME_RESULTS") == 0)
-	{
-		if(SUCCESS == split(accepted_str, PARAM_1, &param))
-		    printf("Bulls: %s\n", param);
-		else
-		{
-			free(accepted_str);
-			return ALLOCTION_FAILED;
-		}
-		if(SUCCESS == split(accepted_str, PARAM_2, &param))
-		   printf("Cows: %s\n", param);
-		else
-		{
-			free(accepted_str);
-			return ALLOCTION_FAILED;
-		}
-		if(SUCCESS == split(accepted_str, PARAM_3, &param))
-		   printf("%s played:", param);
-		else
-		{
-			free(accepted_str);
-			return ALLOCTION_FAILED;
-		}
-		if(SUCCESS == split(accepted_str, PARAM_4, &param))
-		   printf("%s\n", param);
-		else
-		{
-			free(accepted_str);
-			return ALLOCTION_FAILED;
-		}
-		free(accepted_str);
-		return SUCCESS;
-	}
-	else if ((strcmp(param, "SERVER_WIN")) == 0)
+	if (strcmp(message,"SERVER_GAME_RESULTS") == 0)
 	{
 		if (SUCCESS == split(accepted_str, PARAM_1, &param))
-		   printf("%s won!\n", param);
+		{
+			printf("Bulls: %s\n", param);
+			free(param);
+		}
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		if(SUCCESS == split(accepted_str, PARAM_2, &param))
-		   printf("opponents number was %s\n", param);
+		if (SUCCESS == split(accepted_str, PARAM_2, &param))
+		{
+			printf("Cows: %s\n", param);
+			free(param);
+		}
 		else
 		{
 			free(accepted_str);
 			return ALLOCTION_FAILED;
 		}
-		free(accepted_str);
-		return SUCCESS;
+		if (SUCCESS == split(accepted_str, PARAM_3, &param))
+		{
+			printf("%s played:", param);
+			free(param);
+		}
+		else
+		{
+			free(accepted_str);
+			return ALLOCTION_FAILED;
+		}
+		if (SUCCESS == split(accepted_str, PARAM_4, &param))
+		{
+			printf("%s\n", param);
+			free(param);
+		}
+		else
+		{
+			free(accepted_str);
+			return ALLOCTION_FAILED;
+		}
 	}
-	else if ((strcmp(param, "SERVER_DRAW")) == 0)
+	else if ((strcmp(message, "SERVER_WIN")) == 0)
+	{
+		if (SUCCESS == split(accepted_str, PARAM_1, &param))
+		{
+			printf("%s won!\n", param);
+			free(param);
+		}
+		else
+		{
+			free(accepted_str);
+			return ALLOCTION_FAILED;
+		}
+		if (SUCCESS == split(accepted_str, PARAM_2, &param))
+		{
+			printf("opponents number was %s\n", param);
+			free(param);
+		}
+		else
+		{
+			free(accepted_str);
+			return ALLOCTION_FAILED;
+		}
+	}
+	else if ((strcmp(message, "SERVER_DRAW")) == 0)
 	{
 		printf("It's a tie\n");
-		free(accepted_str);
-		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_OPPONENT_QUIT")))
+	else if ((0 == strcmp(message, "SERVER_OPPONENT_QUIT")))
 	{
 		printf("Opponent quit.\n");
-		free(accepted_str);
-		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_MAIN_MENU")))
+	else if ((0 == strcmp(message, "SERVER_MAIN_MENU")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_MAIN_MENU;
 	}
-	else if ((0 == strcmp(param, "SERVER_INVITE")))
+	else if ((0 == strcmp(message, "SERVER_INVITE")))
 	{
 		printf("Game is on!\n");
 		*client_action = RECEIVE;
-		return SUCCESS;
 	}
-	else if ((0 == strcmp(param, "SERVER_DENIED")))
+	else if ((0 == strcmp(message, "SERVER_DENIED")))
 	{
 		printf("Server on %s:%d denied the connection request.\nChoose what to do next :\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 		gets_s(send_str, sizeof(send_str));
@@ -143,16 +147,17 @@ Status receive_level(RECEIVE_SERVER* receive_server, CLIENT_ACTION* client_actio
 			*client_action = CONNECT;
 		}
 	}
-	else if ((0 == strcmp(param, "SERVER_SETUP_REQUEST")))
+	else if ((0 == strcmp(message, "SERVER_SETUP_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_SETUP_REQUEST;
 	}
-	else if ((0 == strcmp(param, "SERVER_PLAYER_MOVE_REQUEST")))
+	else if ((0 == strcmp(message, "SERVER_PLAYER_MOVE_REQUEST")))
 	{
 		*client_action = SEND;
 		*receive_server = SERVER_PLAYER_MOVE_REQUEST;
 	}
+	free(message);
 	free(accepted_str);
 	return SUCCESS;
 }
@@ -381,7 +386,11 @@ Status main(int argc, char* argv[])
 	}
 	status = SUCCESS;
 
-	closesocket(m_socket);
+	if (closesocket(m_socket) == SOCKET_ERROR)
+	{
+		status = FAILED_CLOSE_SOCKET;
+		report_error(status);
+	}
 	WSACleanup();
 	return SUCCESS;
 }
@@ -394,7 +403,10 @@ void report_error(Status status) {
 	case ALLOCTION_FAILED:     printf("Error - Failed at malloc_function"); break;
 	case SET_SOCKET_FAILED:    printf("Error - Failed at set_socket_function %ld", WSAGetLastError()); break;
 	}
-	closesocket(m_socket);
+	if (closesocket(m_socket) == SOCKET_ERROR)
+	{
+		printf("Error - Failed at close_socket_function %ld", WSAGetLastError()); WSACleanup(); exit(FAILED_CLOSE_SOCKET);
+	}
 	WSACleanup();
 	exit(status);
 }

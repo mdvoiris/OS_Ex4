@@ -1,2 +1,5 @@
-﻿  main_server.c
-  server.vcxproj -> C:\Users\Maor\source\repos\OS_Ex4\Ex4\Debug\server.exe
+﻿  shared_communication.c
+  main_server.c
+  service_thread.c
+  Generating Code...
+  server.vcxproj -> C:\Users\haimpiche\Documents\תכנות מערכות\תרגיל 4\Ex4\Debug\server.exe
