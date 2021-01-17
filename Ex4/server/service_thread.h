@@ -11,6 +11,7 @@
 
 
 //Typedefs:
+//enum to distinguish stages in the communication
 typedef enum _stage {
 	REQUEST,
 	MAIN_MENU,
@@ -22,12 +23,15 @@ typedef enum _stage {
 	VERDICT
 }Stage;
 
+//struct to hold game relevant information on players
 typedef struct _player {
 	char* name;
 	char* numbers;
 	char* guess;
 }Player;
 
+//struct to hold file relevant parameters and handles to synchronize file communication between threads
+//all execpt cur_file_pos are shared between threads
 typedef struct _file_params {
 	const char* file_name;
 	HANDLE file_mutex;
@@ -37,6 +41,9 @@ typedef struct _file_params {
 
 
 //Function Handles:
+//main service thread function
+//simulates the game stages and executes calls the execution functions
+//in case of error of client quits it 
 DWORD WINAPI service_thread(LPVOID lpParam);
 
 Status send_to_client(SOCKET socket, Stage stage, char* message);

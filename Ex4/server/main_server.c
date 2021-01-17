@@ -168,8 +168,9 @@ Status admit_clients() {
         //configure socket to linger for queued data to be sent before closing socket
         linger_params.l_onoff = 1;
         linger_params.l_linger = (DEFAULT_TIMEOUT/1000); //in seconds
-        setsockopt(AcceptSocket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int));
-
+        if (setsockopt(AcceptSocket, SOL_SOCKET, SO_LINGER, (char*)&linger_params, sizeof(int)) == SOCKET_ERROR)
+            return FAILED_TO_SET_SOCKET_OPT;
+        
         //if not first
         if (client_thread_h[0] != NULL) {
             //if second
@@ -360,6 +361,7 @@ void report_error(Status status, bool terminate) {
     case FAILED_TO_LISTEN_ON_SOCKET:    printf("Error - listen failed with %ld", WSAGetLastError()); break;
     case FAILED_TO_CLOSE_SOCKET:        printf("Error - Failed to close socket with %ld", WSAGetLastError()); break;
     case FAILED_TO_ACCEPT_SOCKET:       printf("Error - Failed to accept socket with %ld", WSAGetLastError()); break;
+    case FAILED_TO_SET_SOCKET_OPT:      printf("Error - Failed to set socket options with %ld", WSAGetLastError()); break;
     case FAILED_TO_CREATE_EVENT:        printf("Error - Failed to create event with %ld", WSAGetLastError()); break;
     case FAILED_TO_SEND_STRING:         printf("Error - Failed to send string with %ld", WSAGetLastError()); break;
     case FAILED_TO_RECIEVE_STRING:      printf("Error - Failed to recieve string with %ld", WSAGetLastError()); break;

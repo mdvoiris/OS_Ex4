@@ -203,6 +203,8 @@ EXIT:
 	//signal opponent that client disconnected
 	if (!SetEvent(opponent_disconnect_event))
 		report_error(FAILED_TO_SET_EVENT, false);
+	if (!SetEvent(opponent_event))
+		report_error(FAILED_TO_SET_EVENT, false);
 
 	//free memory
 	free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
