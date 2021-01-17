@@ -65,9 +65,12 @@ Status send_level(char* player_name, SEND_SERVER* send_server, RECEIVE_SERVER re
 //receives SOCKADDR_IN typdef, server port, server address, client status (as the above function) and taking care of reconnecting the user to the server if the user wants that.
 //returns if there was an error or the user wants to quit.
 Status connect_level(SOCKADDR_IN client_service, int server_port, char* server_address, SEND_SERVER* send_server, CLIENT_ACTION* client_action);
-//
+//receives player name, indicator if it's a time for CLIENT REQUEST, the last server message, server port, server address, server address
+//and the stausus of the client right now wich is receiving. the function updates the next status 
+//of the client, sending the message to the server and returns if there was an error or the user wants to quit.
 Status receive_level(RECEIVE_SERVER* receive_serve, CLIENT_ACTION* client_action, int server_port, char* server_address);
-//
+//receives the status of the client (as the above function), srver port and server address. checks of the user wants to reconnect
+//to the game. returns if there was an error or the user wants to exiit.
 Status ask_to_reconnect(CLIENT_ACTION** client_action, int server_port, char* server_address);
 
 
