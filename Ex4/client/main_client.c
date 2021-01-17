@@ -5,7 +5,7 @@
 
 Status ask_to_reconnect(CLIENT_ACTION** client_action,int server_port, char* server_address)
 {
-	char send_str[2];
+	char send_str[USER_ANSWER_LEN];
 	printf("Failed connecting to server on %s:%d.\nChoose what to do next:\n1. Try to reconnect\n2. Exit\n", server_address, server_port);
 	gets_s(send_str, sizeof(send_str));
 	if (strcmp(send_str, "2") == 0)
