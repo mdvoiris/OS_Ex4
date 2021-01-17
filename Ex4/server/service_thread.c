@@ -29,12 +29,15 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 	//wait for CLIENT_REQUEST
 	comm_status = receive_string(&recieved, socket);
 	if (comm_status) { 
-		status = FAILED_TO_RECIEVE_STRING;
+		//status = FAILED_TO_RECIEVE_STRING;
 		goto EXIT;
 	}
 
 	//get client name from recieved message
-	split(recieved, PARAM_1, &(client.name));
+	comm_status = split(recieved, PARAM_1, &(client.name));
+	if (comm_status) {
+		goto EXIT;
+	}
 
 	//send SERVER_APPROVED
 	status = send_to_client(socket, REQUEST, NULL);
@@ -53,28 +56,29 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		//wait for client choice
 		comm_status = receive_string(&recieved, socket);
 		if (comm_status) {
-			status = FAILED_TO_RECIEVE_STRING;
+			//status = FAILED_TO_RECIEVE_STRING;
 			goto EXIT;
 		}
 
 		//if client chose CLIENT_VERSUS
 		if (strcmp(recieved,"CLIENT_VERSUS\n") == 0) {
 
-			//search for an already connected opponent or wait for one
-			status = look_for_opponent(&file_params, opponent_event, &client, &opponent);
-			if (status) {
-				//if failed because of opponent disconnect go back to main menu
-				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
-					status = send_to_client(socket, OPPONENT_QUIT, NULL);
-					if (status) {
-						goto EXIT;
-					}
-					free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
-					ResetEvent(opponent_disconnect_event);
-					continue;
+			//if opponent disconnect send message and go back to main menu
+			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+				status = send_to_client(socket, OPPONENT_QUIT, NULL);
+				if (status) {
+					goto EXIT;
 				}
+				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+				ResetEvent(opponent_disconnect_event);
+				continue;
+			}
+			if (status) {
 				goto EXIT;
 			}
+
+			//search for an already connected opponent or wait for one
+			status = look_for_opponent(&file_params, opponent_event, &client, &opponent);
 
 			//if can't find another opponent
 			if (opponent.name == NULL) {
@@ -92,12 +96,24 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 			//wait for client response
 			comm_status = receive_string(&recieved, socket);
 			if (comm_status) {
-				status = FAILED_TO_RECIEVE_STRING;
+				//status = FAILED_TO_RECIEVE_STRING;
 				goto EXIT;
+			}
+			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+				status = send_to_client(socket, OPPONENT_QUIT, NULL);
+				if (status) {
+					goto EXIT;
+				}
+				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+				ResetEvent(opponent_disconnect_event);
+				continue;
 			}
 
 			//get client numbers from recieved message
-			split(recieved, PARAM_1, &(client.numbers));
+			comm_status = split(recieved, PARAM_1, &(client.numbers));
+			if (comm_status) {
+				goto EXIT;
+			}
 
 			//get opponent numbers and share client numbers
 			status = share_numbers(&file_params, opponent_event, SETUP, &client, &opponent);
@@ -134,13 +150,15 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				//wait for client response
 				comm_status = receive_string(&recieved, socket);
 				if (comm_status) {
-					status = FAILED_TO_RECIEVE_STRING;
+					//status = FAILED_TO_RECIEVE_STRING;
 					goto EXIT;
 				}
 
 				//get client guess from recieved message
-				split(recieved, PARAM_1, &(client.guess));
-
+				comm_status = split(recieved, PARAM_1, &(client.guess));
+				if (comm_status) {
+					goto EXIT;
+				}
 
 				//get opponent guess and share client guess
 				status = share_numbers(&file_params, opponent_event, MOVE, &client, &opponent);
@@ -224,6 +242,12 @@ EXIT:
 }
 
 void free_match_memory(File_params* file_params, Player* client, Player* opponent, char** move_results, char** match_verdict) {
+	
+	//get file mutex
+	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
+		report_error(UNRELEASED_MUTEX, false);
+	
+	//free alocated memory
 	if (*move_results != NULL) {
 		free(*move_results);
 		*move_results = NULL;
@@ -253,15 +277,13 @@ void free_match_memory(File_params* file_params, Player* client, Player* opponen
 		client->guess = NULL;
 	}
 
-	//get file mutex
-	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
-		report_error(UNRELEASED_MUTEX, false);
 	//remove session file
-	if (*(file_params->file_exists_p)) {
+	if (*(file_params->file_exists_p) == true) {
 		if (remove(file_params->file_name) != 0)
 			report_error(FAILED_TO_REMOVE_FILE, false);
 		*(file_params->file_exists_p) = false;
 	}
+
 	ReleaseMutex(file_params->file_mutex);
 }
 
