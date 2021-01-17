@@ -601,7 +601,7 @@ Status get_verdict(char** match_verdict, Player* client, Player* opponent) {
 		sprintf_s(*match_verdict, buffer_size, "%s;%s", client->name, opponent->numbers);
 	}
 	//else if opponent wins
-	else if (strcmp(opponent->guess, opponent->numbers) == 0) {
+	else if (strcmp(opponent->guess, client->numbers) == 0) {
 		buffer_size = (strlen(opponent->name) + NUM_OF_DIGITS + 2);
 		*match_verdict = (char*)malloc(buffer_size * sizeof(char));
 		if (*match_verdict == NULL) {

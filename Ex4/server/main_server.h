@@ -33,7 +33,7 @@ DWORD WINAPI monitor_exit(HANDLE main_thread_h);
 
 Status admit_clients();
 
-Status dismiss_client(AcceptSocket);
+Status dismiss_client(SOCKET AcceptSocket);
 
 void clients_cleanup(Client_args client_args);
 
