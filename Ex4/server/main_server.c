@@ -331,9 +331,9 @@ void clients_cleanup(Client_args client_args) {
     //make sure threads exited and close handles
     for (int i = 0; i < NUM_OF_SLOTS; i++) {
         if (client_thread_h[i] != NULL) {
-            GetExitCodeThread(client_thread_h[i], &return_value);
+            GetExitCodeThread(client_thread_h[i], &(return_value[i]));
 
-            if (return_value == STILL_ACTIVE) {
+            if (return_value[i] == STILL_ACTIVE) {
                 TerminateThread(client_thread_h[i], -1);
             }
 

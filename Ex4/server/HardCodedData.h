@@ -36,7 +36,6 @@ typedef enum _status {
     UNRELEASED_MUTEX,
     FOPEN_FAIL,
     ALLOC_FAILED,
-    FAILED_TO_SET_SOCKET_OPT
 } Status;
 
 

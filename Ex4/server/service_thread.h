@@ -53,13 +53,17 @@ Status send_to_client(SOCKET socket, Stage stage, char* message);
 //utilizes events and file mutex to coordinate
 Status share_numbers(File_params* file_params, HANDLE opponent_event, Stage stage, Player *client, Player *opponent);
 
-//build move_results string for each move preformed 
+//build move_results string for each move preformed move
 Status calculate_move_results(char** move_results, int buffer_size, Player* client, Player* opponent);
 
+//check for opponent to play with
+//uses session file and exchanges user names
 Status look_for_opponent(File_params* file_params, HANDLE opponent_event, Player* client, Player* opponent);
 
+//writes verdict if win or draw and update match_verdict string
 Status get_verdict(char** match_verdict, Player* client, Player* opponent);
 
+//frees all allocated memory and deletes session file
 void free_match_memory(File_params* file_params, Player* client, Player* opponent, char** move_results, char** match_verdict);
 
 #endif
