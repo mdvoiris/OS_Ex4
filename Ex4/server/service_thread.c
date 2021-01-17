@@ -29,7 +29,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 	//wait for CLIENT_REQUEST
 	comm_status = receive_string(&recieved, socket);
 	if (comm_status) { 
-		//status = FAILED_TO_RECIEVE_STRING;
 		goto EXIT;
 	}
 
@@ -56,7 +55,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 		//wait for client choice
 		comm_status = receive_string(&recieved, socket);
 		if (comm_status) {
-			//status = FAILED_TO_RECIEVE_STRING;
 			goto EXIT;
 		}
 
@@ -73,12 +71,23 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				ResetEvent(opponent_disconnect_event);
 				continue;
 			}
+
+			//search for an already connected opponent or wait for one
+			status = look_for_opponent(&file_params, opponent_event, &client, &opponent);
 			if (status) {
 				goto EXIT;
 			}
 
-			//search for an already connected opponent or wait for one
-			status = look_for_opponent(&file_params, opponent_event, &client, &opponent);
+			//if opponent quit
+			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+				status = send_to_client(socket, OPPONENT_QUIT, NULL);
+				if (status) {
+					goto EXIT;
+				}
+				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+				ResetEvent(opponent_disconnect_event);
+				continue;
+			}
 
 			//if can't find another opponent
 			if (opponent.name == NULL) {
@@ -96,17 +105,7 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 			//wait for client response
 			comm_status = receive_string(&recieved, socket);
 			if (comm_status) {
-				//status = FAILED_TO_RECIEVE_STRING;
 				goto EXIT;
-			}
-			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
-				status = send_to_client(socket, OPPONENT_QUIT, NULL);
-				if (status) {
-					goto EXIT;
-				}
-				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
-				ResetEvent(opponent_disconnect_event);
-				continue;
 			}
 
 			//get client numbers from recieved message
@@ -115,8 +114,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				goto EXIT;
 			}
 
-			//get opponent numbers and share client numbers
-			status = share_numbers(&file_params, opponent_event, SETUP, &client, &opponent);
 			//if opponent disconnect send message and go back to main menu
 			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
 				status = send_to_client(socket, OPPONENT_QUIT, NULL);
@@ -127,8 +124,21 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				ResetEvent(opponent_disconnect_event);
 				continue;
 			}
+
+			//get opponent numbers and share client numbers
+			status = share_numbers(&file_params, opponent_event, SETUP, &client, &opponent);
 			if (status) {
 				goto EXIT;
+			}
+			//if opponent quit
+			if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
+				status = send_to_client(socket, OPPONENT_QUIT, NULL);
+				if (status) {
+					goto EXIT;
+				}
+				free_match_memory(&file_params, &client, &opponent, &move_results, &match_verdict);
+				ResetEvent(opponent_disconnect_event);
+				continue;
 			}
 
 			//allocate space for move results message
@@ -150,7 +160,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 				//wait for client response
 				comm_status = receive_string(&recieved, socket);
 				if (comm_status) {
-					//status = FAILED_TO_RECIEVE_STRING;
 					goto EXIT;
 				}
 
@@ -160,8 +169,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					goto EXIT;
 				}
 
-				//get opponent guess and share client guess
-				status = share_numbers(&file_params, opponent_event, MOVE, &client, &opponent);
 				//if opponent disconnect send message and go back to main menu
 				if (WaitForSingleObject(opponent_disconnect_event, 0) == WAIT_OBJECT_0) {
 					status = send_to_client(socket, OPPONENT_QUIT, NULL);
@@ -172,6 +179,9 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 					ResetEvent(opponent_disconnect_event);
 					break;
 				}
+
+				//get opponent guess and share client guess
+				status = share_numbers(&file_params, opponent_event, MOVE, &client, &opponent);
 				if (status) {
 					goto EXIT;
 				}
@@ -220,8 +230,6 @@ DWORD WINAPI service_thread(LPVOID lpParam)
 EXIT:
 	//signal opponent that client disconnected
 	if (!SetEvent(opponent_disconnect_event))
-		report_error(FAILED_TO_SET_EVENT, false);
-	if (!SetEvent(opponent_event))
 		report_error(FAILED_TO_SET_EVENT, false);
 
 	//free memory
@@ -397,6 +405,8 @@ Status share_numbers(File_params* file_params, HANDLE opponent_event, Stage stag
 	//get file mutex
 	if (WaitForSingleObject(file_params->file_mutex, DEFAULT_TIMEOUT) != WAIT_OBJECT_0)
 		return UNRELEASED_MUTEX;
+
+	if (*(file_params->file_exists_p) == false) return SUCCESS;
 
 	if ((fopen_s(&session_file, file_params->file_name, "rb+")) != 0) {
 		return FOPEN_FAIL;

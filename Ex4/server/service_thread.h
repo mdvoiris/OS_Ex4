@@ -43,13 +43,17 @@ typedef struct _file_params {
 //Function Handles:
 //main service thread function
 //simulates the game stages and executes calls the execution functions
-//in case of error of client quits it 
+//in case client quits it notifies the opponent with event and clears memory
 DWORD WINAPI service_thread(LPVOID lpParam);
 
+//send to the client the message for the relevant stage in the game/communication
 Status send_to_client(SOCKET socket, Stage stage, char* message);
 
+//uses session file to communicate client and opponent numbers
+//utilizes events and file mutex to coordinate
 Status share_numbers(File_params* file_params, HANDLE opponent_event, Stage stage, Player *client, Player *opponent);
 
+//build move_results string for each move preformed 
 Status calculate_move_results(char** move_results, int buffer_size, Player* client, Player* opponent);
 
 Status look_for_opponent(File_params* file_params, HANDLE opponent_event, Player* client, Player* opponent);
